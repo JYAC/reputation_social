@@ -21,9 +21,11 @@ function shuffle(array) {
 
 /* reputation sampler*/
 function sampleReputation(type){
-    if(type == 'high'){
-        return Math.round(Math.random()*range*2 - range + reputation_level_means[1]);
-    } else if(type == 'low'){
+    if(type == 'low'){
         return Math.round(Math.random()*range*2 - range + reputation_level_means[0]);
+    } else if(type == 'mod'){
+        return Math.round(Math.random()*range*2 - range + reputation_level_means[1]);
+    } else if (type == 'high') {
+        return Math.round(Math.random()*range*2 - range + reputation_level_means[2])
     }
 };

@@ -12,10 +12,10 @@ var reputation_duration = 4;
 var race_choice = ['EA', 'AA'];
 var gender_choice = ['W', 'M'];
 var expression_choice = ['0', '1', '5']; // 0 = Neu, 1 = LAP, 5 = HAP
-var reputation_choice = ['high', 'low']
+var reputation_choice = ['high', 'mod', 'low']
 var identity_choice = [1,2,3,4,5,6,7,8,9,10,11,12]
 
-var reputation_level_means = [20, 80]
+var reputation_level_means = [20, 50, 80]
 var range = 10
 
 var money_option = ['\$0' ,'\$1', '\$2', '\$3', '\$4', '\$5', '\$6', '\$7', '\$8', '\$9', '\$10'];
