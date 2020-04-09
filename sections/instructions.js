@@ -21,14 +21,14 @@ var instru2 = {
     show_clickable_nav: true,
     allow_backward: false,
     pages:[
-    '<p>You will play a game with someone you don’t know. In this game, there are two players:  \‘Player 1\’ and  \‘Player 2.\’ You will be either Player 1 or Player 2.</p> <p>At the beginning of the trial, Player 1 will be given $10 and will decide how much of this money to transfer to Player 2. If Player 1 chooses to transfer money to Player 2, the amount will be quadrupled. Afterwards, Player 2 will decide whether to return 50% of the money to Player 1 or return 0% of the money to Player 1. Player 1 will then receive the amount of money Player 2 returns. This is the end of the trial.</p>',
+    '<p>You will play a game with someone you don’t know. In this game, there are two players:  \‘Player 1\’ and  \‘Player 2.\’ You will be either Player 1 or Player 2.</p> <p>At the beginning of the trial, Player 1 will be given $10 and will decide how much of this money to transfer to Player 2. If Player 1 chooses to transfer money to Player 2, the amount will be quadrupled. Afterwards, Player 2 will decide how much of the money to return to Player 1. Player 1 will then receive the amount of money Player 2 returns. This is the end of the trial.</p>',
     '<p>In this case, Player 1 has $10. Player 1 has to decide how many dollars to transfer to Player 2.</p>'+
     '<img src=\'img/money1.jpeg\'>',
     '<p>In this case, Player 1 decides to transfer $5 to Player 2, keeping $5.</p>'+
     '<img src=\'img/money2.jpeg\'>',
     '<p>The transferred money is quadrupled, so Player 2 receives $20 (4 x $5).</p>'+
     '<img src=\'img/money3.jpeg\'>',
-    '<p>Now Player 2 has to decide whether to return 50% or 0% of the $20 received back to Player 1. In this case, Player 2 returns $10 (50%) to Player 1.</p>'+
+    '<p>Now Player 2 has to decide how much of the $20 to give back to Player 1. In this case, Player 2 returns $10 (50%) to Player 1.</p>'+
     '<img src=\'img/money4.jpeg\'>',
     '<p>As a result, Player 1 ends up having $15, and Player 2 ends up having $10. This is the end of one trial.</p>'+
     '<img src=\'img/money5.jpeg\'>',
