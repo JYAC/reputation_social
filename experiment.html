@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Survey</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="jsPsych/jspsych.js"></script>
+        <script src='jsPsych/plugins/jspsych-fullscreen.js'></script>
+        <script src='jsPsych/plugins/jspsych-instructions.js'></script>
+        <script src='jsPsych/plugins/jspsych-html-keyboard-response.js'></script>
+        <script src='jsPsych/plugins/jspsych-image-keyboard-response.js'></script>
+        <script src='jsPsych/plugins/jspsych-survey-multi-choice.js'></script>
+        <script src='jsPsych/plugins/jspsych-survey-multi-select.js'></script>
+        <script src='jsPsych/plugins/jspsych-survey-likert.js'></script>
+        <script src='jsPsych/plugins/jspsych-call-function.js'></script>
+	<script src='jsPsych/plugins/jspsych-survey-text.js'></script>
+        <script src="faces.json" ></script>
+        <script src="sections/utils.js" ></script>
+        <script src="sections/consent.js" ></script>
+        <script src="sections/instructions.js" ></script>
+        <script src="sections/task.js" ></script>
+        <link href="jsPsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <!--
+        <script src="jsPsych/plugins/jspsych-instructions.js"></script>
+        <script src="jsPsych/plugins/jspsych-xab-image.js"></script>
+        <script src="jsPsych/plugins/jspsych-image-slider-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-html-slider-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-image-keyboard-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-xab-html.js"></script>
+        <script src="jsPsych/plugins/jspsych-survey-text.js"></script>
+        <script src="mmturkey.js"></script> -->
+        <style>
+    	img {width: 400px;}
+        a:link{color:white;}
+        a:visited{color:white;}
+  	</style>
+    </head>
+    <body>
+    </body>
+    <script>
+
+        /*style it they way I want it*/
+        $(document.body).css("background-color", "black");
+        $(document.body).css("color", "white");
+
+        /* Build Trial Timeline */
+
+    	var  timeline = [];
+        if(fullscreen){
+            timeline.push({
+                type: 'fullscreen',
+                fullscreen_mode: true
+            });
+        };
+
+	var participantID = Math.random().toString(36).slice(2)
+	var showID = {
+		type: 'instructions',
+		allow_keys: false,
+		show_clickable_nav: true,
+		allow_backward: false,
+		pages: ['<p>Please write down your participant ID. You will be asked to enter it at the beginning of the questionnaire. It is important for payment purposes.</p> <p style="font-size: 24px; color: red"><b>'+participantID+'</b></p>']
+	} 
+        timeline.push(consent);
+        timeline.push(instru1);
+        timeline.push(showID);
+        timeline.push(instru2);
+//        timeline = timeline.concat(wait(num_dots, wait_duration, "We are verifying the number of players in the game.</h4><h4>Please wait"));
+        timeline.push(select_avatar);
+        timeline = timeline.concat(wait(num_dots, wait_duration, "Please wait while you are being assigned"));
+        timeline.push(instru3);
+	timeline.push(resize);
+	// TODO: change to n_trial
+        for(var i = 0; i < n_trial; i++){
+            if(i==n_trial/2){
+                timeline.push(half);
+            }
+            t = face_stimulus.pop(0);
+            timeline = timeline.concat(getTrial(t));
+        }
+        timeline = timeline.concat(wait(num_dots, wait_duration, "Please wait"));
+	
+	/* Trait ratings */
+        //timeline.push(instru4)
+        //for(var i = 0; i < n_trait_rating; i++){
+        //    t = face_stimulus.pop(0);
+        //    timeline = timeline.concat(showTraitQ(t))
+        //}
+
+	/* Save Function */
+	function saveData(data){
+		$.ajax({
+			type: "POST",
+			cache: false,
+			url: "http://stanford.edu/~mlko53/cgi-bin/one_shot_trust/write_data.php",
+			data: {data: data, pid:participantID},
+			dataType: 'html',
+		});
+	};
+
+	var email = {
+		type: 'survey-text',
+		questions: [{prompt: 'Please enter your <span style="color:red;">university email</span>:'}]
+	};
+
+	timeline.push(email)
+
+	timeline.push({type:'call-function', func: function(data){saveData(jsPsych.data.get().json());}});
+
+	// instru5 is the last element
+        timeline.push(instru5);
+
+        /* INIT Experiment */
+    	callback_complete = jsPsych.init({
+    		timeline: timeline,
+    		on_finish: function(data){
+		jsPsych.data.displayData();
+    		}
+    	});
+        jsPsych.pluginAPI.preloadImages(image_array, callback_complete);
+    </script>
+</html>
+
+
+
