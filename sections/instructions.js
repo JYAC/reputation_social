@@ -21,20 +21,20 @@ var instru2 = {
     show_clickable_nav: true,
     allow_backward: false,
     pages:[
-    '<p>You will play a game with someone you don’t know. In this game, there are two players:  \‘Player 1\’ and  \‘Player 2.\’ You will be either Player 1 or Player 2.</p> <p>At the beginning of the trial, Player 1 will be given $6 and will decide how much of this money to transfer to Player 2. If Player 1 chooses to transfer money to Player 2, the amount will be quadrupled. Afterwards, Player 2 will decide whether to return 50% of the money to Player 1 or return 0% of the money to Player 1. Player 1 will then receive the amount of money Player 2 returns. This is the end of the trial.</p>',
-    '<p>In this case, Player 1, has $6. Player 1 has to decide how many dollars to transfer to Player 2.</p>'+
+    '<p>You will play a game with someone you don’t know. In this game, there are two players:  \‘Player 1\’ and  \‘Player 2.\’ You will be either Player 1 or Player 2.</p> <p>At the beginning of the trial, Player 1 will be given $10 and will decide how much of this money to transfer to Player 2. If Player 1 chooses to transfer money to Player 2, the amount will be quadrupled. Afterwards, Player 2 will decide whether to return 50% of the money to Player 1 or return 0% of the money to Player 1. Player 1 will then receive the amount of money Player 2 returns. This is the end of the trial.</p>',
+    '<p>In this case, Player 1 has $10. Player 1 has to decide how many dollars to transfer to Player 2.</p>'+
     '<img src=\'img/money1.jpeg\'>',
-    '<p>In this case, Player 1 decides to transfer $3 to Player 2, keeping $3.</p>'+
+    '<p>In this case, Player 1 decides to transfer $5 to Player 2, keeping $5.</p>'+
     '<img src=\'img/money2.jpeg\'>',
-    '<p>The transferred money is quadrupled, so Player 2 receives $12 (4 x $3).</p>'+
+    '<p>The transferred money is quadrupled, so Player 2 receives $20 (4 x $5).</p>'+
     '<img src=\'img/money3.jpeg\'>',
-    '<p>Now Player 2 has to decide whether to return 50% or 0% of the $12 received back to Player 1. In this case, Player 2 returns $6 (50%) to Player 1.</p>'+
+    '<p>Now Player 2 has to decide whether to return 50% or 0% of the $20 received back to Player 1. In this case, Player 2 returns $10 (50%) to Player 1.</p>'+
     '<img src=\'img/money4.jpeg\'>',
-    '<p>As a result, Player 1 ends up having $9, and Player 2 ends up having $6. This is the end of one trial.</p>'+
+    '<p>As a result, Player 1 ends up having $15, and Player 2 ends up having $10. This is the end of one trial.</p>'+
     '<img src=\'img/money5.jpeg\'>',
-    '<p>Of course, Player 2 may choose not to return any money (0%) to Player 1. In this case, Player 2 will end up having $12, and Player 1 will end up having $3.</p>'+
+    '<p>Of course, Player 2 may choose not to return any money (0%) to Player 1. In this case, Player 2 will end up having $20, and Player 1 will end up having $5.</p>'+
     '<img src=\'img/money6.jpeg\'>',
-    '<p>Similarly, Player 1 may choose not to transfer any money to Player 2, keeping all of the money. In this case, Player 1 will end up with $6, and Player 2 will end up with nothing.</p>'+
+    '<p>Similarly, Player 1 may choose not to transfer any money to Player 2, keeping all of the money. In this case, Player 1 will end up with $10, and Player 2 will end up with nothing.</p>'+
     '<img src=\'img/money7.jpeg\'>',
 //    '<p>You will play this game with real money, but as an example, we will use tokens. In this case, Player 1 has 4 tokens.</p> <img src=\'img/instr1.jpeg\'>',
 //    '<p>Player 1 has to decide how many tokens to transfer to Player 2. In this case, Player 1 decides to transfer 2 tokens, keeping the other 2 tokens.</p> <img src=\'img/instr2.jpeg\'>',
