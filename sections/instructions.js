@@ -73,7 +73,7 @@ var instru3 = {
     allow_backward: false,
     pages:[
     '<p style="color: red"><b>You have been assigned to Player 1.</b></p>'+
-    '<p>You will play this game 72 times with different players. We will let you know when you are halfway through. On each trial, you will see Player 2’s avatar and the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of collaborative tasks.</p>'+
+    '<p>You will play this game 72 times with different players. We will let you know when you are halfway through. <u>On each trial, you will see Player 2’s avatar and the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of collaborative tasks.</u></p>'+
     '<p>First, you will decide how much you want to transfer in all 72 trials. Then the other players will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
     '<p>At the end of the study, we will randomly choose one of these 72 different trials, and give you and the other player the amount you ended up with on that trial. Thus your total gain will be the $12 gift card plus the amount of money you earned on this randomly selected trial. Do not let your decision in one trial influence your decision in the other trials.</p>'+
     '<p>Now let’s start the game. Click on the next button when you are ready to continue.</p>']
