@@ -40,7 +40,7 @@ function showReputation(face){
     var reputation = {
         type: "html-keyboard-response",
         stimulus: "<img src=\'img/faces/"+face['image']+"\'>",
-        prompt: "<h2 style=\"text-align: center;\">" + face['exact value'] + "% of times they gave back half of what they received.</h2><div style=\"height:186px; color:white\"></div>",
+        prompt: "<h2 style=\"text-align: center;\">" + face['exact value'] + "% of people said that this person is trustworthy.</h2><div style=\"height:186px; color:white\"></div>",
         choices: [],
         trial_duration: reputation_duration * 1000
     };
@@ -62,7 +62,7 @@ function showTrialQ(face){
     var q = {
         type: 'survey-multi-choice',
         button_label: button_str,
-        preamble: "<img src=\'img/faces/"+face['image']+"\'> <h2 style=\"text-align: center;\">" + face['exact value'] + "% of times they gave back half of what they received.</h2>",
+        preamble: "<img src=\'img/faces/"+face['image']+"\'> <h2 style=\"text-align: center;\">" + face['exact value'] + "% of people said that this person is trustworthy.</h2>",
         questions: [{
             prompt: "<h2 style=\"text-align: center;\">How much money will you give to this player?</h2>",
             options: money_option,
@@ -112,7 +112,7 @@ function showTraitQ(face){
     var q = {
         type: 'survey-multi-select',
         button_label: button_str,
-        preamble: "<img src=\'img/faces/"+face['image']+"\'> <h3 style=\"text-align: center;\">" + face['exact value'] + "% of times they gave back half of what they received.</h3>",
+        preamble: "<img src=\'img/faces/"+face['image']+"\'> <h3 style=\"text-align: center;\">" + face['exact value'] + "% of people said that this person is trustworthy.</h3>",
         questions: [{
                 prompt: "<h3 style=\"text-align: center;\">To what extent is this player <u>benevolent</u>?</h3>",
                 options: ["1: Not at all", "2", "3", "4: Moderately", "5", "6", "7: Extremely"],
