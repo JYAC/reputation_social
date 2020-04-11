@@ -51,7 +51,7 @@ var instru2 = {
 //    '<p>In most of the game trials, you will play with another person, but in two of the game trials, you will play with the computer. In the trials with the computer, if you are Player 1, the computer will play as Player 2, and will randomly choose how much to return to you. If you are Player 2, the computer will play as Player 1, and will randomly choose how much to transfer to you. </p>' +
 //    '<p>Lastly, there will be 2 lottery game trials. You will receive $6 in these trials. You will have an opportunity to choose if you want to keep the $6, or if you want to enter a lottery in which you have a 50% chance of winning $6 more, but a 50% chance of losing $5.</p>' +
 //    '<p>Thus the total number of trials you will play is 72. At the end of the study, we will randomly choose one of these 72 different trials, and give you and your counterpart the amount you ended up with in that trial. Thus your total gain will be the $9 gift card plus the amount of money you earned on this randomly selected trial. We will let you know how much you will get at the end of the study.</p>' +
-    '<p>Before you are randomly assigned to either Player 1 or Player 2, you and the other players will choose avatar identities, which you will see during each trial. </p>']
+    '<p>Before you are randomly assigned to either Player 1 or Player 2, you and the other players will choose avatar identities, which you will see during each game. </p>']
 }
 
 var select_avatar = {
@@ -73,16 +73,16 @@ var instru3 = {
     allow_backward: false,
     pages:[
     '<p style="color: red"><b>You have been assigned to Player 1.</b></p>'+
-    '<p>You will play this game 72 times with different players. We will let you know when you are halfway through. <u>On each trial, you will see Player 2’s avatar and the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of collaborative tasks.</u></p>'+
-    '<p>First, you will decide how much you want to transfer in all 72 trials. Then the other players will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
-    '<p>At the end of the study, we will randomly choose one of these 72 different trials, and give you and the other player the amount you ended up with on that trial. Thus your total gain will be the $12 gift card plus the amount of money you earned on this randomly selected trial. Do not let your decision in one trial influence your decision in the other trials.</p>'+
+    '<p>You will play this game 72 times with different players. We will let you know when you are halfway through. <u>For each game, you will see Player 2’s avatar and the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of collaborative tasks.</u></p>'+
+    '<p>First, you will decide how much you want to transfer in all 72 games. Then the other players will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
+    '<p>At the end of the study, we will randomly choose one of these 72 different games, and give you and the other player the amount you ended up with on that game. Thus your total gain will be the $12 gift card plus the amount of money you earned on this randomly selected game. Do not let your decision in one game influence your decision in the other games.</p>'+
     '<p>Now let’s start the game. Click on the next button when you are ready to continue.</p>']
 };
 
 var resize = {
     type: 'survey-multi-choice',
     button_label: button_str,
-    preamble: "Please resize your internet browser so that \$0 and \$10 are on the same line. Click the button when you are ready to start the first trial.",
+    preamble: "Please resize your internet browser so that \$0 and \$10 are on the same line. Click the button when you are ready to start the first game.",
     questions: [{
         prompt: '',
         options: ['\$0' ,'\$1', '\$2', '\$3', '\$4', '\$5', '\$6', '\$7', '\$8', '\$9', '\$10'],
@@ -96,7 +96,7 @@ var half = {
     show_clickable_nav: true,
     allow_backward: false,
     pages: [
-        '<p>You have completed half of the trials. Please click the arrow to continue.'
+        '<p>You have completed half of the games. Please click the arrow to continue.'
     ]
 }
 
