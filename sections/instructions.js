@@ -12,7 +12,7 @@ var instru1 = {
     show_clickable_nav: true,
     allow_backward: false,
     pages:[
-    '<p>Thank you for your participation. This study is about the relationship between people’s personalities and the decisions they make. You will first play an economic game with someone you don\'t know. Afterwards, you will complete a brief questionnaire on a separate webpage.</p><p>Please read the instructions carefully. Also please maximize your browser and avoid using the back button.</p>']
+    '<p>Thank you for your participation. This study is about the relationship between people’s personalities and the decisions they make. You will play a series of economic games with people you don\'t know. Afterwards, you will complete a brief questionnaire on a separate webpage.</p><p>Please read the instructions carefully. Also please maximize your browser and avoid using the back button.</p>']
 }
 
 var instru2 = {
@@ -21,8 +21,8 @@ var instru2 = {
     show_clickable_nav: true,
     allow_backward: false,
     pages:[
-    '<p>You will play a game with someone you don’t know. In this game, there are two players:  \‘Player 1\’ and  \‘Player 2.\’ You will be either Player 1 or Player 2.</p> <p>At the beginning of the trial, Player 1 will be given $10 and will decide how much of this money to transfer to Player 2. If Player 1 chooses to transfer money to Player 2, the amount will be quadrupled. Afterwards, Player 2 will decide how much of the money to return to Player 1. Player 1 will then receive the amount of money Player 2 returns. This is the end of the trial.</p>',
-    '<p>In this case, Player 1 has $10. Player 1 has to decide how many dollars to transfer to Player 2.</p>'+
+    '<p>You will play a game with someone you don’t know. In this game, there are two players:  \‘Player 1\’ and  \‘Player 2.\’ You will be either Player 1 or Player 2.</p> <p>At the beginning of the game, Player 1 will be given $10 and will decide how much of this money to transfer to Player 2. If Player 1 chooses to transfer money to Player 2, the amount will be quadrupled. Afterwards, Player 2 will decide how much of the money to return to Player 1. Player 1 will then receive the amount of money Player 2 returns. This is the end of the game.</p>',
+    '<p>For example, Player 1 has $10. Player 1 has to decide how many dollars to transfer to Player 2.</p>'+
     '<img src=\'img/money1.jpeg\'>',
     '<p>In this case, Player 1 decides to transfer $5 to Player 2, keeping $5.</p>'+
     '<img src=\'img/money2.jpeg\'>',
@@ -30,7 +30,7 @@ var instru2 = {
     '<img src=\'img/money3.jpeg\'>',
     '<p>Now Player 2 has to decide how much of the $20 to give back to Player 1. In this case, Player 2 returns $10 (50%) to Player 1.</p>'+
     '<img src=\'img/money4.jpeg\'>',
-    '<p>As a result, Player 1 ends up having $15, and Player 2 ends up having $10. This is the end of one trial.</p>'+
+    '<p>As a result, Player 1 ends up having $15, and Player 2 ends up having $10. This is the end of one game.</p>'+
     '<img src=\'img/money5.jpeg\'>',
     '<p>Of course, Player 2 may choose not to return any money (0%) to Player 1. In this case, Player 2 will end up having $20, and Player 1 will end up having $5.</p>'+
     '<img src=\'img/money6.jpeg\'>',
@@ -41,7 +41,7 @@ var instru2 = {
 //    '<p>The transferred tokens are quadrupled, so Player 2 receives 8 tokens (4 x 2 tokens).</p>' +
 //    '<img src=\'img/instr3.jpeg\'>',
 //    '<p>Now Player 2 has to decide whether to return 50% or 0% of the 8 tokens received back to Player 1. In this case, Player 2 returns 4 tokens (50%) to Player 1.</p><img src=\'img/instr4.jpeg\'>',
-//    '<p>As a result, Player 1 ends up having 6 tokens, and Player 2 ends up having 4 tokens. This is the end of one trial.</p>'+
+//    '<p>As a result, Player 1 ends up having 6 tokens, and Player 2 ends up having 4 tokens. This is the end of one game.</p>'+
 //    '<img src=\'img/instr5.jpeg\'>',
 //    '<p>Of course, Player 2 may choose not to return any tokens (0%) to Player 1. In this case, Player 2 will end up having 8 tokens, and Player 1 will end up having 2 tokens.</p>'+
 //    '<img src=\'img/instr6.jpeg\'>',
@@ -116,5 +116,5 @@ var instru5 = {
     show_clickable_nav: true,
     allow_backward: false,
     pages: [
-    '<p>You have finished the first portion of the study. Please click on the link below and complete the questionnaire. You may close both tabs after you complete the questionnaire.</p> <p><b><a href="https://stanforduniversity.qualtrics.com/jfe/form/SV_4JDWmATTd7dQVgh">https://stanforduniversity.qualtrics.com/jfe/form/SV_4JDWmATTd7dQVgh</a></b></p>']
+    '<p>You have finished the first portion of the study. Please click on the link below and complete the questionnaire. In the questionnaire, we will show you half of the players with whom you played, and ask you to rate them along various characteristics. You may close both tabs after you complete the questionnaire.</p> <p><b><a href="https://stanforduniversity.qualtrics.com/jfe/form/SV_4JDWmATTd7dQVgh">https://stanforduniversity.qualtrics.com/jfe/form/SV_4JDWmATTd7dQVgh</a></b></p>']
 }
