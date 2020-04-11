@@ -76,7 +76,7 @@ var instru3 = {
     '<p>You will play this game 72 times with different players. We will let you know when you are halfway through. <u>For each game, you will see Player 2’s avatar and the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of collaborative tasks.</u></p>'+
     '<p>First, you will decide how much you want to transfer in all 72 games. Then the other players will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
     '<p>At the end of the study, we will randomly choose one of these 72 different games, and give you and the other player the amount you ended up with on that game. Thus your total gain will be the $12 gift card plus the amount of money you earned on this randomly selected game. Do not let your decision in one game influence your decision in the other games.</p>'+
-    '<p>Now let’s start the game. Click on the next button when you are ready to continue.</p>']
+    '<p>You are ready to start playing. Click on the next button to begin.</p>']
 };
 
 var resize = {
@@ -113,7 +113,7 @@ var instru4 = {
 var instru5 = {
     type: 'instructions',
     allow_keys: false,
-    show_clickable_nav: true,
+    show_clickable_nav: false,
     allow_backward: false,
     pages: [
     '<p>You have finished the first portion of the study. Please click on the link below and complete the questionnaire. In the questionnaire, we will show you half of the players with whom you played, and ask you to rate them along various characteristics. You may close both tabs after you complete the questionnaire.</p> <p><b><a href="https://stanforduniversity.qualtrics.com/jfe/form/SV_4JDWmATTd7dQVgh">https://stanforduniversity.qualtrics.com/jfe/form/SV_4JDWmATTd7dQVgh</a></b></p>']
