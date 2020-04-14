@@ -90,13 +90,33 @@ var resize = {
         required: false}]
 };
 
+var onefourth = {
+    type: 'instructions',
+    allow_keys: false,
+    show_clickable_nav: true,
+    allow_backward: false,
+    pages: [
+        '<p>You have completed 1/4 of the games. Please click the arrow to continue.'
+    ]
+}
+
 var half = {
     type: 'instructions',
     allow_keys: false,
     show_clickable_nav: true,
     allow_backward: false,
     pages: [
-        '<p>You have completed half of the games. Please click the arrow to continue.'
+        '<p>You have completed 1/2 of the games. Please click the arrow to continue.'
+    ]
+}
+
+var threefourths = {
+    type: 'instructions',
+    allow_keys: false,
+    show_clickable_nav: true,
+    allow_backward: false,
+    pages: [
+        '<p>You have completed 3/4 of the games. Please click the arrow to continue.'
     ]
 }
 
