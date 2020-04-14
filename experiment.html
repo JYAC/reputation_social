@@ -74,8 +74,14 @@
 	timeline.push(resize);
 	// TODO: change to n_trial
         for(var i = 0; i < n_trial; i++){
+            if(i==n_trial/4){
+                timeline.push(onefourth);
+            }
             if(i==n_trial/2){
                 timeline.push(half);
+            }
+            if(i==(n_trial*3/4)){
+                timeline.push(threefourths);
             }
             t = face_stimulus.pop(0);
             timeline = timeline.concat(getTrial(t));
