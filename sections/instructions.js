@@ -96,7 +96,7 @@ var onefourth = {
     show_clickable_nav: true,
     allow_backward: false,
     pages: [
-        '<p>You have completed 1/4 of the games. Please click the arrow to continue.'
+        '<p style=font-size:22px>You have completed 1/4 of the games. Please click the arrow to continue.'
     ]
 }
 
@@ -106,7 +106,7 @@ var half = {
     show_clickable_nav: true,
     allow_backward: false,
     pages: [
-        '<p>You have completed 1/2 of the games. Please click the arrow to continue.'
+        '<p style=font-size:22px>You have completed 1/2 of the games. Please click the arrow to continue.'
     ]
 }
 
@@ -116,7 +116,7 @@ var threefourths = {
     show_clickable_nav: true,
     allow_backward: false,
     pages: [
-        '<p>You have completed 3/4 of the games. Please click the arrow to continue.'
+        '<p style=font-size:22px>You have completed 3/4 of the games. Please click the arrow to continue.'
     ]
 }
 
