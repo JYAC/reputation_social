@@ -74,6 +74,13 @@
         timeline.push(instru3);
 	timeline.push(resize);
 	// TODO: change to n_trial
+	    
+	// Dan
+        for (var i = 0; i < n_pre_trial; i++) {
+            t = pre_face_stimulus.pop(0);
+            timeline = timeline.concat(getPreTrial(t));
+        }
+	    
         for(var i = 0; i < n_trial; i++){
             if(i==n_trial/4){
                 timeline.push(onefourth);
