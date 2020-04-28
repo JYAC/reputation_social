@@ -66,15 +66,28 @@ var select_avatar = {
 };
 
 
-var instru3 = {
+var instru3a = {
     type: 'instructions',
     allow_keys: false,
     show_clickable_nav: true,
     allow_backward: false,
     pages:[
     '<p style="color: red"><b>You have been assigned to Player 1.</b></p>'+
-    '<p>You will play this game 72 times with different players. We will let you know periodically how far along you are in the games. <u>For each game, you will see Player 2’s avatar and the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of joint tasks.</u></p>'+
-    '<p>First, you will decide how much you want to transfer in all 72 games. Then the other players will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
+    '<p>For each game, you will see Player 2’s avatar and decide how much you want to transfer. Then, the other player will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
+    '<p>You will first play this game 12 times with different players so you can get acquainted with the game.</p>'+
+    '<p>You are ready to start playing. Click on the next button to begin.</p>']
+};
+
+
+var instru3b = {
+    type: 'instructions',
+    allow_keys: false,
+    show_clickable_nav: true,
+    allow_backward: false,
+    pages:[
+    '<p>Congratulations - You have completed the 12 practice games.</p>'+
+    '<p>You will now play this game 72 times with different players. We will let you know periodically how far along you are in the games. <u>In addition to seeing Player 2’s avatar, you will also see the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of joint tasks.</u></p>'+
+    '<p>Just like the 12 trials you just completed, you will decide how much you want to transfer to Player 2. Then, the other players will receive the amount of money you transferred, and will decide how much to return to you. Again, while you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
     '<p>At the end of the study, we will randomly choose one of these 72 different games, and give you and the other player the amount you ended up with on that game. Thus your total gain will be the $12 gift card plus the amount of money you earned on this randomly selected game. Do not let your decision in one game influence your decision in the other games.</p>'+
     '<p>You are ready to start playing. Click on the next button to begin.</p>']
 };
