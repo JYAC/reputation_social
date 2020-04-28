@@ -96,12 +96,9 @@ function showPreTrialQ(face){
             horizontal: true,
             required: true}],
         data: {
-            reputation: face['reputation'],
-            exact_value: face['exact value'],
             emotion: face['emotion'],
             race: face['race'],
             sex: face['sex'],
-            identity: face['identity']
         }
     };
     return q;
