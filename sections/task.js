@@ -4,11 +4,11 @@ var button_str = '>>'
 var fullscreen = false;
 
 // Dan
-var n_pre_trial = 1;
+var n_pre_trial = 12;
 var pre_face_stimulus = prerep
 
 // n_trail should be 72
-var n_trial = 4;
+var n_trial = 72;
 var n_trait_rating = Math.round(n_trial / 2);
 var face_duration = 4;
 var reputation_duration = 4;
