@@ -27,13 +27,46 @@ var slider_prompt = "Press Q to move left, P to move right. \n Spacebar to confi
 
 var face_stimulus = faces
 
+/* PRE-REPUTATION TRIALS */
+
+function showPreFace(face){
+    var face = {
+        type: "html-keyboard-response",
+        stimulus: "<img src=\'img/faces/"+face['image']+"\'>",
+	      prompt: "<h2 style=\"text-align: center;\"><span style=\"color:black;\">.</span></h2><div style=\"height:135px; color:white;\"></div>",
+        choices: [],
+        trial_duration: face_duration * 1000
+    };
+    return face;
+};
+
+function showPreTrialQ(face){
+    image_array.push("img/faces/"+face['image']);
+    var q = {
+        type: 'survey-multi-choice',
+        button_label: button_str,
+        preamble: "<img src=\'img/faces/"+face['image']+"\'>",
+        questions: [{
+            prompt: "<h2 style=\"text-align: center;\">How much money will you give to this player?</h2>",
+            options: money_option,
+            horizontal: true,
+            required: true}],
+        data: {
+            emotion: face['emotion'],
+            race: face['race'],
+            sex: face['sex'],
+        }
+    };
+    return q;
+}
+
 /* MAIN TASK */
 
 function showFace(face){
     var face = {
         type: "html-keyboard-response",
         stimulus: "<img src=\'img/faces/"+face['image']+"\'>",
-	prompt: "<h2 style=\"text-align: center;\"><span style=\"color:black;\">.</span></h2><div style=\"height:186px; color:white;\"></div>",
+	      prompt: "<h2 style=\"text-align: center;\"><span style=\"color:black;\">.</span></h2><div style=\"height:186px; color:white;\"></div>",
         choices: [],
         trial_duration: face_duration * 1000
     };
@@ -84,25 +117,12 @@ function showTrialQ(face){
     return q;
 }
 
-function showPreTrialQ(face){
-    image_array.push("img/faces/"+face['image']);
-    var q = {
-        type: 'survey-multi-choice',
-        button_label: button_str,
-        preamble: "<img src=\'img/faces/"+face['image']+"\'>",
-        questions: [{
-            prompt: "<h2 style=\"text-align: center;\">How much money will you give to this player?</h2>",
-            options: money_option,
-            horizontal: true,
-            required: true}],
-        data: {
-            emotion: face['emotion'],
-            race: face['race'],
-            sex: face['sex'],
-        }
-    };
-    return q;
-}
+// Dan
+function getPreTrial(face){
+    var trial = [showPreFace(face),
+    showPreTrialQ(face)];
+    return trial;
+};
 
 function getTrial(face){
     var trial = [showFace(face),
@@ -111,12 +131,6 @@ function getTrial(face){
     return trial;
 };
 
-// Dan
-function getPreTrial(face){
-    var trial = [showFace(face),
-    showPreTrialQ(face)];
-    return trial;
-};
 
 var num_dots = [1,2,3,1,2,3,1,2,3,1,2]
 var wait_duration = 500
