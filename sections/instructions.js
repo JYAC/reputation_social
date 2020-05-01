@@ -75,7 +75,7 @@ var instru3a = {
     '<p style="color: red"><b>You have been assigned to Player 1.</b></p>'+
     '<p>For each game, you will see Player 2’s avatar and decide how much you want to transfer. Then, the other player will receive the amount of money you transferred, and will decide how much to return to you. While you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
     '<p>You will first play the game with 12 different players so you can get used to the game.</p>'+
-    '<p>You are ready to start playing. Click on the next button to begin.</p>']
+    '<p>Click on the next button to begin.</p>']
 };
 
 
@@ -87,7 +87,7 @@ var instru3b = {
     pages:[
     '<p>You have now completed the 12 practice games.</p>'+
     '<p>You will now play this game with 72 different players. We will let you know periodically how far along you are in the games. <u>In addition to seeing Player 2’s avatar, you will also see the percentage of people who rated this person as trustworthy. These trustworthiness ratings come from participants in previous studies who interacted with these players on a variety of joint tasks.</u></p>'+
-    '<p>Just like the 12 trials you just completed, you will decide how much you want to transfer to Player 2. Then, the other players will receive the amount of money you transferred, and will decide how much to return to you. Again, while you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
+    '<p>Like the 12 trials you just completed, you will decide how much you want to transfer to Player 2. Then, the other players will receive the amount of money you transferred, and will decide how much to return to you. Again, while you are waiting for the other players\' decisions, you will complete other parts of the study.</p>'+
     '<p>At the end of the study, we will randomly choose one of these 72 different games, and give you and the other player the amount you ended up with on that game. Thus your total gain will be the $12 gift card plus the amount of money you earned on this randomly selected game. Do not let your decision in one game influence your decision in the other games.</p>'+
     '<p>You are ready to start playing. Click on the next button to begin.</p>']
 };
