@@ -60,7 +60,7 @@ var select_avatar = {
     preamble: "請從下面12張圖片中選擇一個作爲你的頭像。請選擇最代表你的那個。在你選擇你的頭像之後，電腦將會隨機把你分配爲玩家1或玩家2。",
     questions: [{
         prompt: '<img src=\'img/Avatar.png\' style=\'width:715px; height:250px;\'>',
-        options: ['1-a', '1-b', '1-c', '2-a', '2-b', '2-c', '3-a', '3-b', '3-c', '4-a', '4-b', '4-c'],
+        options: ['1a', '1b', '1c', '2a', '2b', '2c', '3a', '3b', '3c', '4a', '4b', '4c'],
         horizontal: true,
         required: true}]
 };
