@@ -95,7 +95,8 @@ var instru3b = {
 var resize = {
     type: 'survey-multi-choice',
     button_label: button_str,
-    preamble: "Please resize your internet browser so that \$0 and \$10 are on the same line. Click the button when you are ready to start the first game.",
+    preamble: '<p>Please resize your internet browser so that \$0 and \$10 are on the same line.</p>'+
+    '<p>Click the button when you are ready to start the first game.</p>',
     questions: [{
         prompt: '',
         options: ['\$0' ,'\$1', '\$2', '\$3', '\$4', '\$5', '\$6', '\$7', '\$8', '\$9', '\$10'],
