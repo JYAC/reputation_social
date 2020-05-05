@@ -113,7 +113,7 @@ var instru4 = {
 var instru5 = {
     type: 'instructions',
     allow_keys: false,
-    show_clickable_nav: true,
+    show_clickable_nav: false,
     allow_backward: false,
     pages: [
     '<p>你已完成了實驗的第一部分。請點擊以下的網絡連結，完成問卷。完成問卷之後，你可以把兩個網頁都關掉。</p> <p><b><a href="https://stanforduniversity.qualtrics.com/jfe/form/SV_5tO8DW4nWx5bGPb">https://stanforduniversity.qualtrics.com/jfe/form/SV_5tO8DW4nWx5bGPb</a></b></p>']
