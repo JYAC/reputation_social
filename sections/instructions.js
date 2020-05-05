@@ -82,7 +82,8 @@ var instru3 = {
 var resize = {
     type: 'survey-multi-choice',
     button_label: button_str,
-    preamble: "請調整你的網頁大小，以便NT$0與NT$300顯示在同一行。當你準備好開始遊戲的第一局，請點擊按鍵",
+    preamble: '<p>請調整你的網頁大小，以便NT$0與NT$300顯示在同一行。</p>' +
+    '<p>當你準備好開始遊戲的第一局，請點擊按鍵。</p>',
     questions: [{
         prompt: '',
         options: ['\$0' ,'\$30', '\$60', '\$90', '\$120', '\$150', '\$180', '\$210', '\$240', '\$270', '\$300'],
