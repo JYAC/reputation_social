@@ -91,6 +91,16 @@ var resize = {
         required: false}]
 };
 
+var onefourth = {
+    type: 'instructions',
+    allow_keys: false,
+    show_clickable_nav: true,
+    allow_backward: false,
+    pages: [
+        '<p>您已完成1/4局的遊戲。請按下面的箭頭繼續。'
+    ]
+}
+
 var half = {
     type: 'instructions',
     allow_keys: false,
@@ -98,6 +108,16 @@ var half = {
     allow_backward: false,
     pages: [
         '<p>你已完成了一半的遊戲局。請按下面的箭頭繼續。'
+    ]
+}
+
+var threefourths = {
+    type: 'instructions',
+    allow_keys: false,
+    show_clickable_nav: true,
+    allow_backward: false,
+    pages: [
+        '<p>您已完成3/4局的遊戲。請按下面的箭頭繼續。'
     ]
 }
 
