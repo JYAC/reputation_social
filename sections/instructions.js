@@ -12,7 +12,7 @@ var instru1 = {
     show_clickable_nav: true,
     allow_backward: false,
     pages:[
-    '<p>感謝你的參與。這個研究是有關於人們的性格和他們做的決定之間的關係。首先，你會跟一個你不認識的人玩一個經濟遊戲。之後，你會在另一個網頁上完成一份簡短的問卷。</p><p>請你仔細閱讀一切的說明。另外，請把網頁調到最大的設定（它應該佔用你整個屏幕），並且避免按返回鍵。</p>']
+    '<p>感謝你的參與。這個研究是有關於人們的性格和他們做的決定之間的關係。您會跟一些不認識的人玩一系列的經濟遊戲。之後，你會在另一個網頁上完成一份簡短的問卷。</p><p>請你仔細閱讀一切的說明。另外，請把網頁調到最大的設定（它應該佔用你整個屏幕），並且避免按返回鍵。</p>']
 }
 
 var instru2 = {
@@ -22,7 +22,7 @@ var instru2 = {
     allow_backward: false,
     pages:[
     '<p>你將會和你不認識的人玩一個遊戲。這個遊戲會有兩個玩家：「玩家1」和「玩家2」。你將會被分配為玩家1或玩家2。</p><p>在每一局的開始，玩家1將被給予300新台幣，並且被要求決定轉多少錢給玩家2。如果玩家1選擇轉移錢給玩家2，轉移的數量會翻四倍。之後，玩家2會決定給玩家1退還多少金錢。玩家1將會收到玩家2送回的錢。每一局會如此結束。</p>',
-    '<p>在這個局面中，玩家1擁有300新台幣。玩家1將要決定轉移多少元給玩家2。</p>'+
+    '<p>例如，玩家1有300新台幣。玩家1將要決定轉移多少元給玩家2。</p>'+
     '<img src=\'img/money1.jpeg\'>',
     '<p>在這個局面中，玩家1決定轉移150新台幣給玩家2，給自己留150新台幣。</p>'+
     '<img src=\'img/money2.jpeg\'>',
@@ -117,5 +117,5 @@ var instru5 = {
     show_clickable_nav: false,
     allow_backward: false,
     pages: [
-    '<p>你已完成了實驗的第一部分。請點擊以下的網絡連結，完成問卷。完成問卷之後，你可以把兩個網頁都關掉。</p> <p><b><a href="https://stanforduniversity.qualtrics.com/jfe/form/SV_5tO8DW4nWx5bGPb">https://stanforduniversity.qualtrics.com/jfe/form/SV_5tO8DW4nWx5bGPb</a></b></p>']
+    '<p>你已完成了實驗的第一部分。請點擊以下的網絡連結，完成問卷。在這個問卷中，我們會顯示一些跟您互動過的玩家，並讓您對他們的一些性格特點評分。完成問卷之後，你可以把兩個網頁都關掉。</p> <p><b><a href="https://stanforduniversity.qualtrics.com/jfe/form/SV_5tO8DW4nWx5bGPb">https://stanforduniversity.qualtrics.com/jfe/form/SV_5tO8DW4nWx5bGPb</a></b></p>']
 }
