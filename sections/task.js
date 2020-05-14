@@ -44,7 +44,7 @@ function showReputation(face){
     var reputation = {
         type: "html-keyboard-response",
         stimulus: "<img src=\'img/faces/"+face['image']+"\'>",
-        prompt: "<h2 style=\"text-align: center;\">" + face['exact value'] + "%的時候，這個人回傳了一半所收到的錢。</h2><div style=\"height:190px; color:white\"></div>",
+        prompt: "<h2 style=\"text-align: center;\">" + face['exact value'] + "%的人說這位玩家是可信的。</h2><div style=\"height:190px; color:white\"></div>",
         choices: [],
         trial_duration: reputation_duration * 1000
     };
@@ -66,7 +66,7 @@ function showTrialQ(face){
     var q = {
         type: 'survey-multi-choice',
         button_label: button_str,
-        preamble: "<img src=\'img/faces/"+face['image']+"\'> <h2 style=\"text-align: center;\">" + face['exact value'] + "%的時候，這個人回傳了一半所收到的錢。</h2>",
+        preamble: "<img src=\'img/faces/"+face['image']+"\'> <h2 style=\"text-align: center;\">" + face['exact value'] + "%的人說這位玩家是可信的。</h2>",
         questions: [{
             prompt: "<h2 style=\"text-align: center;\">你想給這個玩家多少錢?</h2>",
             options: money_option,
