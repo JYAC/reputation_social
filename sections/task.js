@@ -84,6 +84,29 @@ function showTrialQ(face){
     return q;
 }
 
+function showPreTrialQ(face){
+    image_array.push("img/faces/"+face['image']);
+    var q = {
+        type: 'survey-multi-choice',
+        button_label: button_str,
+        preamble: "<img src=\'img/faces/"+face['image']+"\'>",
+        questions: [{
+            prompt: "<h2 style=\"text-align: center;\">你想給這個玩家多少錢?</h2>",
+            options: money_option,
+            horizontal: true,
+            required: true}],
+        data: {
+            reputation: face['reputation'],
+            exact_value: face['exact value'],
+            emotion: face['emotion'],
+            race: face['race'],
+            sex: face['sex'],
+            identity: face['identity']
+        }
+    };
+    return q;
+}
+
 function getTrial(face){
     var trial = [showFace(face),
     showReputation(face),
@@ -94,7 +117,7 @@ function getTrial(face){
 // prerep trials
 function getPreTrial(face){
     var trial = [showFace(face),
-    showTrialQ(face)];
+    showPreTrialQ(face)];
     return trial;
 };
 
