@@ -76,6 +76,9 @@
 	// TODO: change to n_trial
 
         for (var i = 0; i < n_pre_trial; i++) {
+        	if(i==n_trial/4){
+                timeline.push(onefourth);
+            }
             t = pre_face_stimulus.pop(0);
             timeline = timeline.concat(getPreTrial(t));
         }
@@ -83,6 +86,9 @@
         for(var i = 0; i < n_trial; i++){
             if(i==n_trial/2){
                 timeline.push(half);
+            }
+            if(i==(n_trial*3/4)){
+                timeline.push(threefourths);
             }
             t = face_stimulus.pop(0);
             timeline = timeline.concat(getTrial(t));
