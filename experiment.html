@@ -71,7 +71,7 @@
 //        timeline = timeline.concat(wait(num_dots, wait_duration, "We are verifying the number of players in the game.</h4><h4>Please wait"));
         timeline.push(select_avatar);
         timeline = timeline.concat(wait(num_dots, wait_duration, "你正被分配中，請稍後"));
-        timeline.push(instru3);
+        timeline.push(instru3a);
 	timeline.push(resize);
 	// TODO: change to n_trial
 
@@ -82,6 +82,8 @@
             t = pre_face_stimulus.pop(0);
             timeline = timeline.concat(getPreTrial(t));
         }
+
+        timeline.push(instru3b);
         
         for(var i = 0; i < n_trial; i++){
             if(i==n_trial/2){
