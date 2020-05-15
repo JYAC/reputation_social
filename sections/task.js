@@ -27,6 +27,39 @@ var slider_prompt = "爲了向左移動，請按Q。爲了向右移動，請按P
 
 var face_stimulus = faces
 
+/* PRE-REPUTATION TRIALS */
+
+function showPreFace(face){
+    var face = {
+        type: "html-keyboard-response",
+        stimulus: "<img src=\'img/faces/"+face['image']+"\'>",
+	      prompt: "<h2 style=\"text-align: center;\"><span style=\"color:black;\">.</span></h2><div style=\"height:135px; color:white;\"></div>",
+        choices: [],
+        trial_duration: face_duration * 1000
+    };
+    return face;
+};
+
+function showPreTrialQ(face){
+    image_array.push("img/faces/"+face['image']);
+    var q = {
+        type: 'survey-multi-choice',
+        button_label: button_str,
+        preamble: "<img src=\'img/faces/"+face['image']+"\'>",
+        questions: [{
+            prompt: "<h2 style=\"text-align: center;\">你想給這個玩家多少錢?</h2>",
+            options: money_option,
+            horizontal: true,
+            required: true}],
+        data: {
+            emotion: face['emotion'],
+            race: face['race'],
+            sex: face['sex'],
+        }
+    };
+    return q;
+}
+
 /* MAIN TASK */
 
 function showFace(face){
@@ -84,37 +117,17 @@ function showTrialQ(face){
     return q;
 }
 
-function showPreTrialQ(face){
-    image_array.push("img/faces/"+face['image']);
-    var q = {
-        type: 'survey-multi-choice',
-        button_label: button_str,
-        preamble: "<img src=\'img/faces/"+face['image']+"\'>",
-        questions: [{
-            prompt: "<h2 style=\"text-align: center;\">你想給這個玩家多少錢?</h2>",
-            options: money_option,
-            horizontal: true,
-            required: true}],
-        data: {
-            emotion: face['emotion'],
-            race: face['race'],
-            sex: face['sex']
-        }
-    };
-    return q;
-}
+// prerep trials
+function getPreTrial(face){
+    var trial = [showFace(face),
+    showPreTrialQ(face)];
+    return trial;
+};
 
 function getTrial(face){
     var trial = [showFace(face),
     showReputation(face),
     showTrialQ(face)];
-    return trial;
-};
-
-// prerep trials
-function getPreTrial(face){
-    var trial = [showFace(face),
-    showPreTrialQ(face)];
     return trial;
 };
 
