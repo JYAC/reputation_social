@@ -1,0 +1,3632 @@
+---
+title: "Social Reputation"
+author: "Julie Cachia"
+date: "07/02/2020"
+output:
+  html_document:
+    highlight: pygments
+    theme: flatly
+    toc: yes
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+```
+
+# Load libraries and data
+
+```{r include = FALSE}
+library(umx) # Cronbach Alpha calculation
+library(lmerTest) # Asnalyses using lmer
+library(emmeans) # Posthoc analyses
+library(scales) # Rescaling y axis for AVI demographics plots
+library(pander) # Create tables
+library(knitr)
+library(mediation)
+#install.packages("sjstats")
+library(sjstats) # To output eta squared
+library(qualtRics)
+library(tidyverse)
+library(Rmisc)
+```
+
+```{r include = FALSE}
+# Set theme
+theme_set(
+  theme_classic() + # set the theme
+    theme(text = element_text(size = 16))
+)
+```
+
+## Prepare European American data
+
+```{r}
+# read in part 1 data
+Part1_norep <- read.csv("../../Data/Part1/one_shot_trust_long_norep.csv")
+Part1 <- read.csv("../../Data/Part1/one_shot_trust_long.csv")
+# read in part 2 data
+Part2 <- read.csv("../../Data/Part2/reputation_study_part2.csv")
+
+#Make sure full survey filled out
+Part2 <- Part2 %>% 
+  filter(Progress == 100) %>% 
+  dplyr::select(-(SC0:TraitRatingsB_DO_Trait.55)) # take out randomization vars
+
+# turn all variables (mainly for pID, email and welcome code) into characters
+Part1_norep <- Part1_norep %>%
+  mutate_all(as.character)
+Part1 <- Part1 %>%
+  mutate_all(as.character)
+Part2 <- Part2 %>%
+  mutate_all(as.character)
+
+#Remove white spaces
+Part1_norep$pID <- gsub(" ", "", Part1_norep$pID) #pID column
+Part1$pID <- gsub(" ", "", Part1$pID) #pID column
+Part2$WelcomeCode <- gsub(" ", "", Part2$WelcomeCode) #WelcomeCode column (some participants added a space after the code which made it not match with the Part 1 pID)
+Part1_norep$email <- gsub(" ", "", Part1_norep$email) #Part 1 email column 
+Part1$email <- gsub(" ", "", Part1$email) #Part 1 email column
+Part2$Email <- gsub(" ", "", Part2$Email) #Part 2 email column 
+```
+
+```{r}
+# Fix European American data (redundant with bonus payment script)
+
+#Emails: Remove first duplicate email
+#Part 1
+Duplicate1 <- Part1$pID[Part1$email == "rebecca.m.hornstein@gmail.com"][1]
+Duplicate2 <- Part1$pID[Part1$email == "Carson.macik@yale.edu"][1]
+Part1 <- Part1[!(Part1$pID == Duplicate1 | Part1$pID == Duplicate2) ,] #Take them out
+Part1_norep <- Part1_norep[!(Part1_norep$pID == Duplicate1 | Part1_norep$pID == Duplicate2) ,] #Take them out
+
+#Convert emails and welcome code to character in order to perform operation below
+Part2$Email <- as.character(Part2$Email)
+Part2$WelcomeCode <- as.character(Part2$WelcomeCode)
+
+#Manually replace Part 2 Welcome Code with correct code from Part 1 pID
+Part2$WelcomeCode[Part2$Email == "rcerulli@stanford.edu"] <- as.character(Part1$pID[Part1$email == "rcerulli@stanford.edu"][1])
+Part2$WelcomeCode[Part2$Email == "Halle_D@yahoo.com"] <- as.character(Part1$pID[Part1$email == "Halle_D@yahoo.com"][1])
+Part2$WelcomeCode[Part2$Email == "crowder.kenzi@gmail.com"] <- as.character(Part1$pID[Part1$email == "kcrowder7@sycamores.indstate.edu"][1])
+```
+
+### Create Eur Amer Data_norep
+```{r}
+# rename Part1_norep columns
+Part1_norep <- Part1_norep %>% 
+  mutate(expression_norep = expression, 
+         race_norep = race, 
+         response_norep = response,
+         sex_norep = sex,
+         trial_num_norep = trial_num) %>% 
+  dplyr::select(-c(rt, expression, race, response, sex, trial_num))
+
+# merge Part 1 (no rep) & 2 
+Data_norep <- inner_join(Part1_norep, Part2, by = c("pID" = "WelcomeCode")) # combine part 1 and part 2 by pID/WelcomeCode - European American
+
+Data_norep <- Data_norep %>% 
+  mutate(Culture = "European American") %>% 
+  dplyr::select(-c(X:UserLanguage)) %>%
+  rename_at(vars(starts_with("Trait1")), list(~str_replace(., "Trait", "Trait."))) %>% # fix weird naming discrepancy
+  rename_at(vars(starts_with("Trait2")), list(~str_replace(., "Trait", "Trait.")))  # fix weird naming discrepancy
+
+# Fix column type:
+Data_norep <- type.convert(Data_norep, as.is = TRUE)
+```
+
+### Create Eur Amer Data
+```{r}
+# merge Part 1 & 2
+Data <- inner_join(Part1, Part2, by = c("pID" = "WelcomeCode")) # combine part 1 and part 2 by pID/WelcomeCode - European American
+
+Data <- Data %>% 
+  mutate(Culture = "European American") %>% 
+  dplyr::select(-c(Duration..in.seconds.,X)) %>%
+  rename_at(vars(starts_with("Trait1")), list(~str_replace(., "Trait", "Trait."))) %>% # fix weird naming discrepancy
+  rename_at(vars(starts_with("Trait2")), list(~str_replace(., "Trait", "Trait.")))  # fix weird naming discrepancy
+
+# Fix column type:
+Data <- type.convert(Data, as.is = TRUE)
+```
+
+## Prepare Taiwan data
+
+```{r}
+# read in part 1 data
+Part1_norep_t <- read.csv("../../../Taiwan/Data/Part1/one_shot_trust_long_norep.csv")
+Part1_t <- read.csv("../../../Taiwan/Data/Part1/one_shot_trust_long.csv")
+
+# read in part 2 data
+# Part2_t <- fetch_survey(surveyID = "SV_5tO8DW4nWx5bGPb", force_request = TRUE, convert = FALSE, label = FALSE)
+# write.csv(Part2_t, "../../../Taiwan/Data/Part2/reputation_study_part2_t.csv")
+Part2_t <- read.csv("../../../Taiwan/Data/Part2/reputation_study_part2_t.csv")
+
+#Make sure full survey filled out
+Part2_t <- Part2_t %>% 
+  filter(Progress == 100) %>% 
+  dplyr::select(-(FL_182_DO_TraitRatingsA:`TraitRatingsB_DO_Trait.43`)) %>%  # take out randomization vars
+  filter(Age != "test") # take out Phoebe's pilot data
+
+# turn all variables (mainly for pID, email and welcome code) into characters
+Part1_norep_t <- Part1_norep_t %>%
+  mutate_all(as.character)
+Part1_t <- Part1_t %>%
+  mutate_all(as.character)
+Part2_t <- Part2_t %>%
+  mutate_all(as.character)
+
+#Remove white spaces
+Part1_norep_t$pID <- gsub(" ", "", Part1_norep_t$pID) #pID column
+Part1_t$pID <- gsub(" ", "", Part1_t$pID) #pID column
+Part2_t$WelcomeCode <- gsub(" ", "", Part2_t$WelcomeCode) #WelcomeCode column
+Part1_norep_t$email <- gsub(" ", "", Part1_norep_t$email) #Part 1 email column 
+Part1_t$email <- gsub(" ", "", Part1_t$email) #Part 1 email column
+Part2_t$Email <- gsub(" ", "", Part2_t$Email) #Part 2 email column 
+```
+
+```{r}
+#Fix Taiwan data (redundant with bonus payment script)
+
+#Emails: Remove first duplicate email
+#Part 1
+Duplicate1 <- Part1_t$pID[Part1_t$email == "108703022@nccu.edu.tw"][1]
+Part1_t <- Part1_t[!(Part1_t$pID == Duplicate1) ,] # Take them out
+Part1_norep_t <- Part1_norep_t[!(Part1_norep_t$pID == Duplicate1) ,] # Take them out
+
+# #Part 2
+Duplicate1 <- Part2_t$WelcomeCode[Part2_t$Email == "106308052@nccu.edu.tw"][1]
+Duplicate2 <- Part2_t$WelcomeCode[Part2_t$Email == "a0361088@g2.usc.edu.tw"][1]
+Part2_t <- Part2_t[!(Part2_t$WelcomeCode == Duplicate1 | Part2_t$WelcomeCode == Duplicate2) ,] # Take them out
+
+#Manually replace Part 2 Welcome Code with correct code from Part 1 pID
+Part2_t$WelcomeCode[Part2_t$Email == "108364103@nccu.edu.tw"] <- as.character(Part1_t$pID[Part1_t$email == "108364103@nccu.edu.tw"][1])
+Part2_t$WelcomeCode[Part2_t$Email == "106601069@nccu.edu.tw"] <- as.character(Part1_t$pID[Part1_t$email == "106601069@nccu.edu.tw"][1])
+```
+
+### Create Taiwan Data_norep_t
+```{r}
+# rename Part1_norep columns
+Part1_norep_t <- Part1_norep_t %>% 
+  mutate(expression_norep = expression, 
+         race_norep = race, 
+         response_norep = response,
+         sex_norep = sex,
+         trial_num_norep = trial_num) %>% 
+  dplyr::select(-c(rt, expression, race, response, sex, trial_num))
+
+# merge Part 1 (no rep) & 2 
+Data_norep_t <- inner_join(Part1_norep_t, Part2_t, by = c("pID" = "WelcomeCode")) # combine part 1 and part 2 by pID/WelcomeCode - European American
+
+Data_norep_t <- Data_norep_t %>% 
+  mutate(Culture = "East Asian") %>% 
+  dplyr::select(-c(StartDate:UserLanguage)) %>%
+  rename_at(vars(starts_with("tipi")), list(~str_replace(., "tipi", "TIPI_"))) %>%  # fix weird naming discrepancy
+  rename_at(vars(starts_with("Trait")), list(~str_replace(., " ", "."))) %>%  # fix weird naming discrepancy
+  filter(Ethnicity_4 == 1 & is.na(Ethnicity_1) & is.na(Ethnicity_2) & is.na(Ethnicity_3) & is.na(Ethnicity_5) & is.na(Ethnicity_6) & is.na(Ethnicity_7)) # make sure ethnicity matches
+
+Data_norep_t$Age[Data_norep_t$Age == "23歲"] <- "23" # remove Chinese character in age column
+
+# Fix column type:
+Data_norep_t <- type.convert(Data_norep_t, as.is = TRUE)
+```
+
+### Create Taiwan Data_t
+```{r}
+# merge Part 1 & 2
+Data_t <- inner_join(Part1_t, Part2_t, by = c("pID" = "WelcomeCode")) # combine part 1 and part 2 by pID/WelcomeCode - European American
+
+Data_t <- Data_t %>% 
+  mutate(Culture = "East Asian") %>% 
+  dplyr::select(-Duration..in.seconds.) %>% # fix accidental differences in items
+  rename_at(vars(starts_with("tipi")), list(~str_replace(., "tipi", "TIPI_"))) %>%  # fix weird naming discrepancy
+  rename_at(vars(starts_with("Trait")), list(~str_replace(., " ", "."))) %>%  # fix weird naming discrepancy
+  filter(Ethnicity_4 == 1 & is.na(Ethnicity_1) & is.na(Ethnicity_2) & is.na(Ethnicity_3) & is.na(Ethnicity_5) & is.na(Ethnicity_6) & is.na(Ethnicity_7)) # make sure ethnicity matches
+
+Data_t$Age[Data_t$Age == "23歲"] <- "23" # remove Chinese character in age column
+
+# Fix column type:
+Data_t <- type.convert(Data_t, as.is = TRUE)
+```
+
+## Merge European American and Taiwan data 
+
+```{r, include = FALSE}
+# no rep data
+all_equal(Data_norep, Data_norep_t) # check that the column names for both dataframes match
+
+Data_norep <- bind_rows(Data_norep, Data_norep_t)
+
+# rep data 
+all_equal(Data, Data_t) # check that the column names for both dataframes match
+
+Data <- bind_rows(Data, Data_t)
+
+# take out StartDate to UserLanguage (columns that aren't useful)
+Data <- Data %>%
+  dplyr::select(-(StartDate:UserLanguage))
+```
+
+## Clean Data_norep
+
+```{r}
+Data_norep <- Data_norep %>%
+  # select participants 30 years old and younger
+  filter((Age <= 30 & Age >= 18)) %>% # took out "| is.na(Age)" because we want to exclude "NA" age
+  # create factors
+  filter(Born == 1) %>% # make sure participant and their parents are born and raised in US/Taiwan, and US grandparents are from North America/Western Europe (Father_Born and Mother_Born not included because everyone indicated that or something that qualifies)
+  mutate(Culture = factor(Culture,
+                          levels = c("European American", "East Asian"),
+                          labels = c("European American", "East Asian")),
+         Gender = factor(Gender,
+                         levels = c(1, 2),
+                         labels = c("Male", "Female")),
+         Education = factor(Education,
+                            levels = c(1:9),
+                            labels = c("< HS",
+                                       "HS/GED",
+                                       "College (not curr enrolled)",
+                                       "College (curr enrolled)",
+                                       "Assoc",
+                                       "BA/BS",
+                                       "Masters",
+                                       "Doct",
+                                       "Professional")),
+         FamSES2 = factor(FamSES2,
+                          levels = c(1:8),
+                          labels = c("<10K",
+                                     "10-20K",
+                                     "20-30K",
+                                     "30-40K",
+                                     "40-50K",
+                                     "50-75K",
+                                     "75-100K",
+                                     ">100K")),
+         expression_norep = factor(expression_norep,
+                             levels = c("neut", "calm", "exci")),
+         race_norep = factor(race_norep,
+                       levels = c("asian", "white")),
+         sex_norep = factor(sex_norep,
+                      levels = c("female", "male"))) %>% 
+  dplyr::rename(race_norep = race_norep)
+
+Data_norep <- Data_norep %>% 
+  dplyr::ungroup() %>% 
+  dplyr::group_by(pID) %>%
+  # calculate SD in amount given
+  dplyr::mutate(responseSD = sd(response_norep, na.rm = T)) %>%
+  # if SD = 0, make responseNoVar equal to 1 else 0
+  dplyr::mutate(responseNoVar = ifelse(responseSD == 0, 1, 0)) #if SD for all trials was 0, make the responseNoVar equal to 1. If not 0, then make it equal to 0 
+
+# count how many participants had no variation in trust game responses
+nsubjects <- Data_norep %>%
+  dplyr::ungroup() %>% 
+  dplyr::group_by(responseNoVar, Culture) %>%
+  dplyr::summarise(n = n_distinct(pID))
+pander(nsubjects)
+```
+
+## Clean Data
+
+```{r}
+Data <- Data %>%
+  # select participants 30 years old and younger
+  filter((Age <= 30 & Age >= 18)) %>% # took out "| is.na(Age)" because we want to exclude "NA" age
+  # create factors
+  filter(Born == 1) %>% # make sure participant and their parents are born and raised in US/Taiwan, and US grandparents are from North America/Western Europe (Father_Born and Mother_Born not included because everyone indicated that or something that qualifies)
+  mutate(Culture = factor(Culture,
+                          levels = c("European American", "East Asian"),
+                          labels = c("European American", "East Asian")),
+         Gender = factor(Gender,
+                         levels = c(1, 2),
+                         labels = c("Male", "Female")),
+         Education = factor(Education,
+                            levels = c(1:9),
+                            labels = c("< HS",
+                                       "HS/GED",
+                                       "College (not curr enrolled)",
+                                       "College (curr enrolled)",
+                                       "Assoc",
+                                       "BA/BS",
+                                       "Masters",
+                                       "Doct",
+                                       "Professional")),
+         FamSES2 = factor(FamSES2,
+                          levels = c(1:8),
+                          labels = c("<10K",
+                                     "10-20K",
+                                     "20-30K",
+                                     "30-40K",
+                                     "40-50K",
+                                     "50-75K",
+                                     "75-100K",
+                                     ">100K")),
+         reputation = factor(reputation,
+                             levels = c("low", "mod", "high")),
+         expression = factor(expression,
+                             levels = c("neut", "calm", "exci")),
+         race = factor(race,
+                       levels = c("asian", "white")),
+         sex = factor(sex,
+                      levels = c("female", "male"))) %>% 
+  dplyr::rename(target_race = race)
+
+Data <- Data %>% 
+  dplyr::ungroup() %>% 
+  dplyr::group_by(pID) %>%
+  # calculate SD in amount given
+  dplyr::mutate(responseSD = sd(response, na.rm = T)) %>%
+  # if SD = 0, make responseNoVar equal to 1 else 0
+  dplyr::mutate(responseNoVar = ifelse(responseSD == 0, 1, 0)) #if SD for all trials was 0, make the responseNoVar equal to 1. If not 0, then make it equal to 0 
+
+# count how many participants had no variation in trust game responses
+nsubjects <- Data %>%
+  dplyr::ungroup() %>% 
+  dplyr::group_by(responseNoVar, Culture) %>%
+  dplyr::summarise(n = n_distinct(pID))
+pander(nsubjects)
+```
+
+## Compute AVI
+
+```{r}
+# i1_1 enthusiastic
+# i1_7 excited
+# i1_9 elated
+# i2_9 euphoric
+
+# i1_6 relaxed
+# i3_3 calm
+# i3_9 peaceful
+# i3_10 serene
+
+# Compute actual and ideal affect scores
+Data <- Data %>% 
+  dplyr::group_by(pID) %>% 
+  dplyr::rowwise() %>% 
+  dplyr::mutate(aHAP = mean(c(a1_1, a1_7, a1_9, a2_9), na.rm = T), 
+         aLAP = mean(c(a1_6, a3_3, a3_9, a3_10), na.rm = T),
+         iHAP = mean(c(i1_1, i1_7, i1_9, i2_9), na.rm = T), 
+         iLAP = mean(c(i1_6, i3_3, i3_9, i3_10), na.rm = T))
+
+#Ipsatize actual and ideal (separately)
+Ipsatized_Actual <- Data %>% 
+  dplyr::select(pID, a1_1:a4_9) %>% #Only select actual affect variables
+  dplyr::ungroup() %>% 
+  dplyr::mutate(aSD = apply(.[,2:ncol(.)], na.rm = T, 1, sd)) %>% #Compute rowwise SD
+  dplyr::mutate(aMean = rowMeans(dplyr::select(., contains("_")), na.rm = T)) %>% #Compute rowwise means
+  dplyr::mutate(a_enthus_i = ifelse(aSD != 0, (a1_1 - aMean)/aSD, 0), #Ipsatize enthusiastic
+         a_excited_i = ifelse(aSD != 0, (a1_7 - aMean)/aSD, 0), #Ipsatize excited (ifelse function is there to ensure that if they input same answer for all affect and get SD = 0. their ipsatized value will be 0 rather than NA)
+         a_elated_i = ifelse(aSD != 0, (a1_9 - aMean)/aSD, 0), #Ipsatize elated
+         a_euphoric_i = ifelse(aSD != 0, (a2_9 - aMean)/aSD, 0), #Ipsatize euphoric
+         a_relaxed_i = ifelse(aSD != 0, (a1_6 - aMean)/aSD, 0), #Ipsatize relaxed
+         a_calm_i = ifelse(aSD != 0, (a3_3 - aMean)/aSD, 0), #Ipsatize calm
+         a_peaceful_i = ifelse(aSD != 0, (a3_9 - aMean)/aSD, 0), #Ipsatize peaceful
+         a_serene_i = ifelse(aSD != 0, (a3_10 - aMean)/aSD, 0)) %>% #Ipsatize serene
+  rowwise %>% 
+  dplyr::mutate(aHAP_i = mean(c(a_enthus_i, a_excited_i, a_elated_i, a_euphoric_i), na.rm = T), #Compute ipsatized HAP
+         aLAP_i = mean(c(a_relaxed_i, a_calm_i, a_peaceful_i, a_serene_i), na.rm = T)) %>% #Compute ipsatized LAP
+  dplyr::select(pID, aHAP_i, aLAP_i) %>% #Keep only the ipsatized HAP and LAP scores
+  dplyr::distinct()
+
+Ipsatized_Ideal <- Data %>% 
+  dplyr::select(pID, i1_1:i4_9) %>% #Only select ideal affect variables
+  dplyr::ungroup() %>% 
+  dplyr::mutate(iSD = apply(.[,2:ncol(.)], na.rm = T, 1, sd)) %>% #Compute rowwise SD
+  dplyr::mutate(iMean = rowMeans(dplyr::select(., contains("_")), na.rm = T)) %>% #Compute rowwise means
+  dplyr::mutate(i_enthus_i = ifelse(iSD != 0, (i1_1 - iMean)/iSD, 0), #Ipsatize enthusiastic (ifelse function is there to ensure that if they input same answer for all affect and get SD = 0. their ipsatized value will be 0 rather than NA)
+         i_excited_i = ifelse(iSD != 0, (i1_7 - iMean)/iSD, 0), #Ipsatize excited
+         i_elated_i = ifelse(iSD != 0, (i1_9 - iMean)/iSD, 0), #Ipsatize elated
+         i_euphoric_i = ifelse(iSD != 0, (i2_9 - iMean)/iSD, 0), #Ipsatize euphoric
+         i_relaxed_i = ifelse(iSD != 0, (i1_6 - iMean)/iSD, 0), #Ipsatize relaxed
+         i_calm_i = ifelse(iSD != 0, (i3_3 - iMean)/iSD, 0), #Ipsatize calm
+         i_peaceful_i = ifelse(iSD != 0, (i3_9 - iMean)/iSD, 0), #Ipsatize peaceful
+         i_serene_i = ifelse(iSD != 0, (i3_10 - iMean)/iSD, 0)) %>% #Ipsatize serene
+  rowwise %>% 
+  dplyr::mutate(iHAP_i = mean(c(i_enthus_i, i_excited_i, i_elated_i, i_euphoric_i), na.rm = T), #Compute ipsatized HAP
+         iLAP_i = mean(c(i_relaxed_i, i_calm_i, i_peaceful_i, i_serene_i), na.rm = T)) %>% #Compute ipsatized LAP
+  dplyr::select(pID, iHAP_i, iLAP_i) %>%  #Keep only the ipsatized HAP and LAP scores
+  dplyr::distinct()
+
+Data <- left_join(Data, Ipsatized_Actual, by = "pID") #Add ipsatized actual affect scores to original dataframe
+Data <- left_join(Data, Ipsatized_Ideal, by = "pID") #Add ipsatized ideal affect scores to original dataframe
+
+Data_norep <- left_join(Data_norep, Ipsatized_Actual, by = "pID") #Add ipsatized actual affect scores to norep dataframe
+Data_norep <- left_join(Data_norep, Ipsatized_Ideal, by = "pID") #Add ipsatized ideal affect scores to norep dataframe
+```
+
+## Compute other scales
+```{r}
+# General Trust Scale
+Data <- Data %>%
+  ungroup() %>% 
+  mutate(GeneralTrust = rowMeans(dplyr::select(., starts_with("Trust")), na.rm = T)) #Compute mean
+
+# Importance of Social Image - Self
+Data <- Data %>%
+  ungroup() %>% 
+  mutate(SelfImage = rowMeans(dplyr::select(., starts_with("SelfImage")), na.rm = T)) #Compute mean
+
+# Importance of Social Image - Other
+Data <- Data %>%
+  ungroup() %>% 
+  mutate(OtherImage = rowMeans(dplyr::select(., starts_with("OtherImage")), na.rm = T)) #Compute mean
+
+# Reputation Stability Mindset
+Data <- Data %>%
+  ungroup() %>% 
+  mutate(RepStability = rowMeans(dplyr::select(., starts_with("RepStability")), na.rm = T)) #Compute mean
+
+# # CSIV (Circumplex Scales of Interpersonal Values) - can it simply be averaged??
+# Data <- Data %>%
+#   ungroup() %>% 
+#   mutate(CSIV = rowMeans(dplyr::select(., starts_with("CSIV")), na.rm = T)) #Compute mean
+
+# Factor reputation levels from low to high
+Data$reputation = factor(Data$reputation, levels = c("low", "mod", "high"))
+```
+
+## Trait ratings
+```{r}
+# first, since the trialnum count in Part1 and the trait rating count in Part2 are inverted, invert trialnum 1-72 --> 72-1
+trialNum <- Data %>% 
+  mutate(trial_num = 73 - trial_num) %>% 
+  dplyr::select(pID, trial_num, sex, target_race, expression, reputation, exact_value, rt, identity, response, contains("AP"), GeneralTrust, SelfImage, OtherImage, RepStability, contains("SchwartzValues"), contains("ap"), Culture, contains("SES"), contains("_"), Education, Gender, Age, responseNoVar) # select only variables we care about
+
+# separate all trait ratings but keep pID as reference for re-joining later
+traitRatings <- Data %>% 
+  dplyr::select(pID, contains("Trait.")) %>% 
+  distinct()
+
+# gather (pivot_long) so that all traits are in one column and ratings are in "Value"
+traitRatingsLong <- traitRatings %>% 
+  pivot_longer(cols = starts_with("Trait."), names_to = "Measure", values_to = "Value") 
+
+# take out the "Trait." portion of the column titles for easy separation in next portion
+traitRatingsLong$Measure = gsub("Trait.","", traitRatingsLong$Measure)
+
+# separate trait rating titles ("Measure") into two separate columns, one for the trial_num and another for specific trait being rated
+traitRatingsLong <- traitRatingsLong %>% 
+  separate(Measure, c("trial_num", "trait")) %>% 
+  pivot_wider(names_from = trait, values_from = Value) %>% # spread the "trait" column back out so that each trait is a column 
+  mutate(trial_num = as.numeric(trial_num))
+
+# reincorporate traitRatingsLong to original dataset using pID and trial_num
+Data <- left_join(by = c("pID", "trial_num"), trialNum, traitRatingsLong) 
+
+# rename traits so they have helpful titles 
+Data <- Data %>% 
+  dplyr::rename(trait_competent = "1", 
+         trait_trustworthy = "2",
+         trait_financiallyNeedy = "3",
+         trait_dominant = "4",
+         trait_friendly = "5")
+```
+
+
+# Descriptives
+
+## Sample
+
+### No variation
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+# count how many participants had no variation in trust game responses
+
+# Data_norep
+nsubjects <- Data_norep %>%
+  dplyr::group_by(responseNoVar, Culture) %>%
+  dplyr::summarise(n = n_distinct(pID))
+pander(nsubjects)
+
+# see what these no variation amounts were
+responseNoVar <- Data_norep %>%
+  # select participants with no variation in trust game responses
+  filter(responseNoVar == 1) %>%
+  group_by(pID, Culture) %>%
+  dplyr::summarise(response_norep = mean(response_norep))
+pander(responseNoVar)
+
+# Data (with rep)
+nsubjects <- Data %>%
+  dplyr::group_by(responseNoVar, Culture) %>%
+  dplyr::summarise(n = n_distinct(pID))
+pander(nsubjects)
+
+# see what these no variation amounts were
+responseNoVar <- Data %>%
+  # select participants with no variation in trust game responses
+  filter(responseNoVar == 1) %>%
+  group_by(pID, Culture) %>%
+  dplyr::summarise(response = mean(response))
+pander(responseNoVar)
+```
+
+Total European American sample size (*before* excluding no variation) = `r n_distinct(Data$pID[Data$Culture == "European American"])`. 
+Total European American sample size (*after* excluding no variation) = `r n_distinct(Data$pID[Data$Culture == "European American"]) - n_distinct(Data$pID[Data$Culture == "European American" & Data$responseNoVar == 1])`.
+
+Total Taiwan sample size (*before* excluding no variation) = `r n_distinct(Data$pID[Data$Culture == "East Asian"])`. 
+Total Taiwan sample size (*after* excluding no variation) = `r n_distinct(Data$pID[Data$Culture == "East Asian"]) - n_distinct(Data$pID[Data$Culture == "East Asian" & Data$responseNoVar == 1])`.
+
+```{r include = FALSE}
+# for the rest of analyses, exclude participants who had no variation
+Data_norep <- Data_norep %>%
+  filter(responseNoVar == 0)
+
+Data <- Data %>%
+  filter(responseNoVar == 0)
+```
+
+## COVID Items
+```{r}
+unique(Data$COVimpact_10_TEXT)
+```
+
+## Ipsatize response (by individual)
+```{r}
+# Data_norep
+Ipsatized_Response <- Data_norep %>%
+  dplyr::select(pID, trial_num_norep, response_norep) %>% #Only select variables
+  ungroup() %>%
+  group_by(pID) %>%
+  dplyr::mutate(response_mean_norep = mean(response_norep, na.rm = T),
+         response_SD_norep = sd(response_norep, na.rm = T),
+         response_i_norep = (response_norep - response_mean_norep)/response_SD_norep) %>%
+  dplyr::select(pID, trial_num_norep, response_i_norep) #Keep only pID and ipsatized response scores
+
+Data_norep <- left_join(Data_norep, Ipsatized_Response, by = c("pID", "trial_num_norep")) #Add ipsatized response scores to original dataframe
+
+# Data (with rep)
+Ipsatized_Response <- Data %>%
+  dplyr::select(pID, trial_num, response) %>% #Only select variables
+  ungroup() %>%
+  group_by(pID) %>%
+  dplyr::mutate(response_mean = mean(response, na.rm = T),
+         response_SD = sd(response, na.rm = T),
+         response_i = (response - response_mean)/response_SD) %>%
+  dplyr::select(pID, trial_num, response_i) #Keep only pID and ipsatized response scores
+
+Data <- left_join(Data, Ipsatized_Response, by = c("pID", "trial_num")) #Add ipsatized response scores to original dataframe
+```
+
+# Convert NT$ currency to US Dollar
+
+```{r}
+# Divide only the taiwanese currency by 30 and keeps the US currency the same
+Data_norep <- Data_norep %>%
+  mutate(responseConvert_norep = ifelse(Culture == "East Asian", response_norep / 30, response_norep))
+
+Data <- Data %>%
+  mutate(responseConvert = ifelse(Culture == "East Asian", response / 30, response))
+```
+
+# Convert $NT currency to US Dollar using PPP
+```{r}
+#https://www.quandl.com/data/ODA/TWN_PPPEX-Taiwan-Province-of-China-Implied-PPP-Conversion-Rate-LCU-per-USD
+# Divide only the taiwanese currency by 14.06 and keeps the US currency the same
+Data_norep <- Data_norep %>%
+  mutate(responsePPP_norep = ifelse(Culture == "East Asian", response_norep / 14.06, response_norep))
+
+Data <- Data %>%
+  mutate(responsePPP = ifelse(Culture == "East Asian", response / 14.06, response))
+
+```
+
+```{r}
+# create dataframe with demographics vars for each participant
+Demographics <- Data %>%
+  dplyr::select(pID, Age, Gender, Education, contains("SES"), contains("HAP"), contains("LAP"), GeneralTrust, SelfImage, OtherImage, RepStability, contains("SchwartzValues"), Culture) %>%
+  distinct()
+```
+
+## Age
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+age <- Demographics %>%
+  dplyr::group_by(Culture) %>%
+  dplyr::summarize(Age_Mean = mean(Age, na.rm = T),
+            Age_SD = sd(Age, na.rm = T))
+pander(age)
+
+# t test
+t.test(Age ~ Culture, data = Demographics)
+
+#Plot
+ggplot(Demographics, aes(x = Age)) +
+  geom_bar() +
+  facet_grid(Culture~.) +
+  xlab("Age")
+```
+
+## Gender
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+gender <- Demographics %>%
+  group_by(Culture) %>% 
+  dplyr::count(Gender)
+pander(gender)
+
+## TEST GENDER once you have final Taiwanese dataset
+# M <- as.table(rbind(c(43, 40), c(66, 62)))
+# dimnames(M) <- list(gender = c("M", "F"),
+#                     culture = c("East Asian","European American"))
+# (Xsq <- chisq.test(M))  # Prints test summary
+```
+
+## Education
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+education <- Demographics %>%
+  group_by(Culture) %>%
+  dplyr::count(Education)
+pander(education)
+
+# fix x axis labels 
+my.labels <- c("< HS",
+               "HS/GED",
+               "College\n(not curr\nenrolled)",
+               "College\n(curr\nenrolled)",
+               "Assoc",
+               "BA/BS",
+               "Masters",
+               "Doct",
+               "Professional")
+
+#Plot
+ggplot(Demographics, aes(x = Education)) +
+  geom_bar() +
+  facet_grid(Culture~.) +
+  xlab("Education") +
+  scale_x_discrete(labels= my.labels)
+```
+
+## SES
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+ses <- Demographics %>%
+  group_by(Culture) %>%
+  dplyr::count(FamSES2)
+pander(ses)
+
+# t test
+t.test(as.numeric(FamSES2) ~ Culture, data = Demographics)
+
+anno <- data.frame(x1 = c(4.9, 0), x2 = c(0, 6.05), 
+                   y1 = c(0, 0), y2 = c(100, 100), 
+                   Culture = c("East Asian", "European American"))
+
+#Plot
+ggplot(Demographics, aes(x = FamSES2)) +
+  geom_bar() +
+  xlab("SES") +
+  geom_segment(data = anno, aes(x = x1, xend = x1, y = y1, yend = y2),colour = "blue") +
+  geom_segment(data = anno, aes(x = x2, xend = x2, y = y1, yend = y2),colour = "red") +
+  facet_grid(Culture~.)
+
+#Create a new graph or add line in old graph?
+#Create variable with SES and Annual Household Income
+#https://www.ceicdata.com/en/united-states/household-income-by-state/household-income-united-states
+#https://www.ceicdata.com/en/indicator/taiwan/annual-household-income-per-capita
+#https://eng.stat.gov.tw/ct.asp?xItem=3458&CtNode=1597&mp=5
+#US National Average Income = 63179
+#TN National Average Income = 43534
+```
+
+## AVI: Ideal
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+iAVI <- Demographics %>% #ideal
+  dplyr::group_by(Culture) %>%
+  dplyr::summarize(iHAP_Mean = mean(iHAP, na.rm = T),
+            iHAP_SD = sd(iHAP, na.rm = T),
+            iLAP_Mean = mean(iLAP, na.rm = T),
+            iLAP_SD = sd(iLAP, na.rm = T),
+            iHAPi_Mean = mean(iHAP_i, na.rm = T),
+            iHAPi_SD = sd(iHAP_i, na.rm = T),
+            iLAPi_Mean = mean(iLAP_i, na.rm = T),
+            iLAPi_SD = sd(iLAP_i, na.rm = T))
+pander(iAVI)
+
+# AVI: tidy up dataframe so that iHAP, iLAP, iHAP_i, iLAP_i, aHAP and aLAP (which are currently individual columns) are now rows under IdealAffect, IpsatizedIdealAffect, and ActualAffect, respectively:
+TidyAVI <- Demographics %>% 
+  gather('iHAP', 'iLAP', key = "IdealAffect", value = "Valuation") %>% 
+  gather('iHAP_i', 'iLAP_i', key = "IpsatizedIdealAffect", value = "Valuation_i") %>% 
+  gather('aHAP', 'aLAP', key = "ActualAffect", value = "Reported") %>% 
+  gather('aHAP_i', 'aLAP_i', key = "IpsatizedActualAffect", value = "Reported_i")
+
+ggplot(TidyAVI, aes(x = IdealAffect, y = Valuation, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  scale_x_discrete(limits=c("iHAP","iLAP"),
+                   labels=c("iHAP","iLAP")) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_fill_manual(values=c("#D99594", "#94B3D7")) +
+  theme(text = element_text(size=20, family="serif")) +
+  xlab("Ideal Affect") +
+  coord_cartesian(ylim = c(1, 5))
+
+ggplot(TidyAVI, aes(x = IpsatizedIdealAffect, y = Valuation_i, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  scale_x_discrete(limits=c("iHAP_i","iLAP_i"),
+                   labels=c("iHAP","iLAP")) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_fill_manual(values=c("#D99594", "#94B3D7")) +
+  theme(text = element_text(size=20, family="serif")) +
+  xlab("Ideal Affect (Ipsatized)") 
+```
+
+## AVI: Actual
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+aAVI <- Demographics %>% #actual
+  dplyr::group_by(Culture) %>%
+  dplyr::summarize(aHAP_Mean = mean(aHAP, na.rm = T),
+            aHAP_SD = sd(aHAP, na.rm = T),
+            aLAP_Mean = mean(aLAP, na.rm = T),
+            aLAP_SD = sd(aLAP, na.rm = T),
+            aHAPi_Mean = mean(aHAP_i, na.rm = T),
+            aHAPi_SD = sd(aHAP_i, na.rm = T),
+            aLAPi_Mean = mean(aLAP_i, na.rm = T),
+            aLAPi_SD = sd(aLAP_i, na.rm = T))
+pander(aAVI)
+
+ggplot(TidyAVI, aes(x = ActualAffect, y = Reported, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  scale_x_discrete(limits=c("aHAP","aLAP"),
+                   labels=c("aHAP","aLAP")) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_fill_manual(values=c("#D99594", "#94B3D7")) +
+  theme(text = element_text(size=20, family="serif")) +
+  xlab("Actual Affect") +
+  coord_cartesian(ylim = c(1, 5))
+
+ggplot(TidyAVI, aes(x = IpsatizedActualAffect, y = Reported_i, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  scale_x_discrete(limits=c("aHAP_i","aLAP_i"),
+                   labels=c("aHAP","aLAP")) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_fill_manual(values=c("#D99594", "#94B3D7")) +
+  theme(text = element_text(size=20, family="serif")) +
+  xlab("Actual Affect (Ipsatized)") 
+```
+
+### Cultural difference in ideal/actual affect
+
+```{r}
+# To make sure each participant only has one ideal/actual affect value, select variables and then do distinct()
+
+AVI <- Data %>% 
+  dplyr::select(pID, Culture, Gender, iHAP, iLAP, iHAP_i, iLAP_i, aHAP, aLAP, aHAP_i, aLAP_i) %>% 
+  distinct
+
+# Make data long
+
+AVI_long <- AVI %>%
+  dplyr::rename(ideal_HAP = iHAP, ideal_LAP = iLAP, ideali_HAP = iHAP_i, ideali_LAP = iLAP_i,
+                actual_HAP = aHAP, actual_LAP = aLAP, actuali_HAP = aHAP_i, actuali_LAP = aLAP_i) %>% 
+  pivot_longer(c(ideal_HAP, ideal_LAP, ideali_HAP, ideali_LAP, actual_HAP, actual_LAP, actuali_HAP, actuali_LAP),
+               names_to = c(".value", "Affect"),
+               names_sep = "_",
+               values_drop_na = TRUE
+  )
+
+AVI_long <- AVI_long %>% 
+  mutate(Affect = factor(Affect, 
+                         levels = c("HAP", "LAP"),
+                         labels = c("HAP", "LAP")))
+
+contrasts(AVI_long$Affect) <- cbind(HAPVsLAP = c(1,-1))
+contrasts(AVI_long$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+# Liner Mixed Effects Models
+
+# Ideal Affect: Non ipsatized
+
+modelIdeal <- lmer(data = AVI_long, ideal ~ Culture * Affect + actual + (1|pID))
+summary(modelIdeal)
+
+# Ideal Affect: Ipsatized
+
+modelIdeal_i <- lmer(data = AVI_long, ideali ~ Culture * Affect + actuali + (1|pID))
+summary(modelIdeal_i)
+
+# Actual Affect: Non ipsatized
+
+modelActual <- lmer(data = AVI_long, actual ~ Culture * Affect + (1|pID))
+summary(modelActual)
+
+# Actual Affect: Ipsatized
+
+modelActual_i <- lmer(data = AVI_long, actuali ~ Culture * Affect + (1|pID))
+summary(modelActual_i)
+
+# REPEATED-MEASURES ANOVA
+
+AVI_long %>%
+  dplyr::group_by(Culture, Affect) %>%
+  dplyr::summarize(n = n(),
+                   mean_raw = mean(ideal, na.rm=T),
+                   mean_ips = mean(ideali, na.rm=T),
+                   stdv_raw = sd(ideal, na.rm=T),
+                   stdv_ips = sd(ideali, na.rm=T),
+                   SE_raw = stdv_raw/sqrt(n),
+                   SE_ips = stdv_ips/sqrt(n)) 
+
+# run anova
+
+# ipsatized
+aov_ips <- aov(ideali ~ Culture * Affect + actuali + Error(pID/Affect), data = AVI_long)
+summary(aov_ips) # get main effects
+eta_sq(aov_ips, partial = TRUE) # get eta squared for partial effects
+
+emm <- emmeans(aov_ips, ~ Culture * Affect) # probe interaction
+pairs <- pairs(emm) # this outputs p value
+confint(pairs) # this outputs confidence interval
+
+# raw
+aov_raw <- aov(ideal ~ Culture * Affect + actual + Error(pID/Affect), data = AVI_long)
+summary(aov_raw) # get main effects
+eta_sq(aov_raw, partial = TRUE) # get eta squared for partial effects
+
+emm <- emmeans(aov_raw, ~ Culture * Affect) # probe interaction
+pairs <- pairs(emm) # this outputs p value
+confint(pairs) # this outputs confidence interval
+```
+
+### Probe Culture x Affect interaction above:
+
+```{r}
+# only within HAP (HAP == 0, reference group)
+contrasts(AVI_long$Affect) <- cbind(HAPRef = c(0,1))
+
+modelIdeal_i <- lmer(data = AVI_long, ideali ~ Culture * Affect + actuali + (1|pID))
+summary(modelIdeal_i)
+
+modelIdeal <- lmer(data = AVI_long, ideal ~ Culture * Affect + actual + (1|pID))
+summary(modelIdeal)
+
+# only within LAP (LAP == 0, reference group)
+contrasts(AVI_long$Affect) <- cbind(LAPRef = c(1,0))
+
+modelIdeal_i <- lmer(data = AVI_long, ideali ~ Culture * Affect + actuali + (1|pID))
+summary(modelIdeal_i)
+
+modelIdeal <- lmer(data = AVI_long, ideal ~ Culture * Affect + actual + (1|pID))
+summary(modelIdeal)
+
+# only within European Americans (Eur == 0, reference group)
+contrasts(AVI_long$Affect) <- cbind(HAPVsLAP = c(1,-1)) # reset
+contrasts(AVI_long$Culture) <- cbind(EurRef = c(1,0))
+
+modelIdeal_i <- lmer(data = AVI_long, ideali ~ Culture * Affect + actuali + (1|pID))
+summary(modelIdeal_i)
+
+modelIdeal <- lmer(data = AVI_long, ideal ~ Culture * Affect + actual + (1|pID))
+summary(modelIdeal)
+
+# only within East Asians (Asi == 0, reference group)
+contrasts(AVI_long$Affect) <- cbind(HAPVsLAP = c(1,-1)) # reset
+contrasts(AVI_long$Culture) <- cbind(AsiRef = c(0,1))
+
+modelIdeal_i <- lmer(data = AVI_long, ideali ~ Culture * Affect + actuali + (1|pID))
+summary(modelIdeal_i)
+
+modelIdeal <- lmer(data = AVI_long, ideal ~ Culture * Affect + actual + (1|pID))
+summary(modelIdeal)
+```
+
+## Schwartz Values
+```{r fig.width=8, fig.height=6}
+# "SchwartzValues_1" Power
+# "SchwartzValues_2" Achievement
+# "SchwartzValues_3" Hedonism
+# "SchwartzValues_4" Stimulation
+# "SchwartzValues_5" Self-direction
+# "SchwartzValues_6" Universalism
+# "SchwartzValues_7" Benevolence
+# "SchwartzValues_8" Tradition
+# "SchwartzValues_9" Conformity
+# "SchwartzValues_10" Security
+
+#Power
+
+Power <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Power_Mean = mean(SchwartzValues_1, na.rm = T),
+            Power_SD = sd(SchwartzValues_1, na.rm = T))
+pander(Power)
+
+#Achievement
+
+Achievement <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Achievement_Mean = mean(SchwartzValues_2, na.rm = T),
+            Achievement_SD = sd(SchwartzValues_2, na.rm = T))
+pander(Achievement)
+
+#Hedonism
+
+Hedonism <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Hedonism_Mean = mean(SchwartzValues_3, na.rm = T),
+            Hedonism_SD = sd(SchwartzValues_3, na.rm = T))
+pander(Hedonism)
+
+#Stimulation
+
+Stimulation <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Stimulation_Mean = mean(SchwartzValues_4, na.rm = T),
+            Stimulation_SD = sd(SchwartzValues_4, na.rm = T))
+pander(Stimulation)
+
+#Self-direction
+
+Self_direction <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Self_direction_Mean = mean(SchwartzValues_5, na.rm = T),
+            Self_direction_SD = sd(SchwartzValues_5, na.rm = T))
+pander(Self_direction)
+
+#Universalism
+
+Universalism <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Universalism_Mean = mean(SchwartzValues_6, na.rm = T),
+            Universalism_SD = sd(SchwartzValues_6, na.rm = T))
+pander(Universalism)
+
+#Benevolence
+
+Benevolence <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Benevolence_Mean = mean(SchwartzValues_7, na.rm = T),
+            Benevolence_SD = sd(SchwartzValues_7, na.rm = T))
+pander(Benevolence)
+
+#Tradition
+
+Tradition <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Tradition_Mean = mean(SchwartzValues_8, na.rm = T),
+            Tradition_SD = sd(SchwartzValues_8, na.rm = T))
+pander(Tradition)
+
+#Conformity
+
+Conformity <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Conformity_Mean = mean(SchwartzValues_9, na.rm = T),
+            Conformity_SD = sd(SchwartzValues_9, na.rm = T))
+pander(Conformity)
+
+#Security
+
+Security <- Demographics %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture) %>% 
+  dplyr::summarize(Security_Mean = mean(SchwartzValues_10, na.rm = T),
+            Security_SD = sd(SchwartzValues_10, na.rm = T))
+pander(Security)
+
+# Visualize
+
+Schwartz <- Demographics %>% 
+  pivot_longer(cols = starts_with("SchwartzValues_"), names_to = "SchwartzValue", values_to = "rating")
+
+ggplot(Schwartz, aes(x = SchwartzValue, y = rating, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  scale_x_discrete(limits=c("SchwartzValues_1","SchwartzValues_2", "SchwartzValues_3","SchwartzValues_4", "SchwartzValues_5","SchwartzValues_6","SchwartzValues_7", "SchwartzValues_8", "SchwartzValues_9", "SchwartzValues_10"),
+                   labels=c("Power", "Achiev", "Hed", "Stim", "Self-dir", "Univ", "Benev", "Trad", "Conform", "Security")) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_fill_manual(values=c("#d99594", "#94b3d7")) +
+  xlab("Schwartz Values") +
+  ylab("Rating (0-8)")
+```
+### Cultural difference in Schwartz Values
+
+```{r}
+#Power
+
+modelPower <- lm(data = Demographics, SchwartzValues_1 ~ Culture)
+summary(modelPower)
+
+#Achievement
+
+modelAchievement <- lm(data = Demographics, SchwartzValues_2 ~ Culture)
+summary(modelAchievement)
+
+#Hedonism
+
+modelHedonism <- lm(data = Demographics, SchwartzValues_3 ~ Culture)
+summary(modelHedonism)
+
+#Stimulation
+
+modelStimulation <- lm(data = Demographics, SchwartzValues_4 ~ Culture)
+summary(modelStimulation)
+
+#Self-direction
+
+modelSelfDirection <- lm(data = Demographics, SchwartzValues_5 ~ Culture)
+summary(modelSelfDirection)
+
+#Universalism
+
+modelUniversalism <- lm(data = Demographics, SchwartzValues_6 ~ Culture)
+summary(modelUniversalism)
+
+#Benevolence
+
+modelBenevolence <- lm(data = Demographics, SchwartzValues_7 ~ Culture)
+summary(modelBenevolence)
+
+#Tradition
+
+modelTradition <- lm(data = Demographics, SchwartzValues_8 ~ Culture)
+summary(modelTradition)
+
+#Conformity
+
+modelConformity <- lm(data = Demographics, SchwartzValues_9 ~ Culture)
+summary(modelConformity)
+
+#Security
+
+modelSecurity<- lm(data = Demographics, SchwartzValues_10 ~ Culture)
+summary(modelSecurity)
+```
+
+## General Trust Scale 
+```{r echo = FALSE, warning = FALSE, include = TRUE}
+trust <- Demographics %>%
+  group_by(Culture) %>% 
+  dplyr::summarize(trust_mean = mean(GeneralTrust, na.rm = T),
+            trust_sd = sd(GeneralTrust, na.rm = T))
+pander(trust)
+
+model1 <- lm(data = Demographics, GeneralTrust ~ Culture)
+summary(model1)
+
+model2 <- lm(data = Demographics, GeneralTrust ~ Culture * Gender)
+summary(model2)
+
+#Plot
+ggplot(Demographics, aes(x = GeneralTrust)) +
+  facet_grid(Culture~.) +
+  geom_bar() +
+  xlab("General Trust Scale")
+```
+
+## Importance of Social Image - Self
+```{r echo = FALSE, warning = FALSE}
+selfImage <- Demographics %>%
+  group_by(Culture) %>% 
+  dplyr::summarize(selfImage_mean = mean(SelfImage, na.rm = T),
+            selfImage_sd = sd(SelfImage, na.rm = T))
+pander(selfImage)
+
+model1 <- lm(data = Demographics, SelfImage ~ Culture)
+summary(model1)
+
+#Plot
+ggplot(Demographics, aes(x = SelfImage)) +
+  facet_grid(Culture~.) +
+  geom_bar() +
+  xlab("Self Image (1-7)")
+```
+
+## Importance of Social Image - Other
+```{r echo = FALSE, warning = FALSE}
+otherImage <- Demographics %>%
+  group_by(Culture) %>% 
+  dplyr::summarize(otherImage_mean = mean(OtherImage, na.rm = T),
+            otherImage_sd = sd(OtherImage, na.rm = T))
+pander(otherImage)
+
+model1 <- lm(data = Demographics, OtherImage ~ Culture)
+summary(model1)
+
+#Plot
+ggplot(Demographics, aes(x = OtherImage)) +
+  facet_grid(Culture~.) +
+  geom_bar() +
+  xlab("Other Image (1-7)")
+```
+
+## Reputation Stability Mindset (higher values indicate more stability)
+```{r echo = FALSE, warning = FALSE}
+repStability <- Demographics %>%
+  group_by(Culture) %>% 
+  dplyr::summarize(repStability_mean = mean(RepStability, na.rm = T),
+            repStability_sd = sd(RepStability, na.rm = T))
+pander(repStability)
+
+model1 <- lm(data = Demographics, RepStability ~ Culture)
+summary(model1)
+
+#Plot
+ggplot(Demographics, aes(x = RepStability)) +
+  facet_grid(Culture~.) +
+  geom_bar() +
+  xlab("Reputation Stability Mindset (1-6)")
+```
+
+# Cronbach's alpha for AVI
+
+European Americans: 
+```{r, include = FALSE}
+# make sure each participant only gets one row (instead of 72 rows for trials)
+AVI_Demographics <- Data %>%
+  dplyr::select(pID, contains("_"), Culture) %>%
+  distinct()
+
+#Ideal HAP
+iHAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "European American") %>% 
+  dplyr::select(i1_1, i1_7, i1_9, i2_9) %>%  
+  drop_na()
+iHAP_alpha <- reliability(cov(data.matrix(iHAP_alpha))) #Convert to matrix and calculate alpha
+iHAP_alpha$alpha #Output just alpha
+
+#Ideal LAP
+iLAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "European American") %>% 
+  dplyr::select(i1_6, i3_3, i3_9, i3_10) %>%  
+  drop_na()
+iLAP_alpha <- reliability(cov(data.matrix(iLAP_alpha))) #Convert to matrix and calculate alpha
+iLAP_alpha$alpha #Output just alpha
+
+#Actual HAP
+aHAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "European American") %>% 
+  dplyr::select(a1_1, a1_7, a1_9, a2_9) %>%  
+  drop_na()
+aHAP_alpha <- reliability(cov(data.matrix(aHAP_alpha))) #Convert to matrix and calculate alpha
+aHAP_alpha$alpha #Output just alpha
+
+#Actual LAP
+aLAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "European American") %>% 
+  dplyr::select(a1_6, a3_3, a3_9, a3_10) %>%  
+  drop_na()
+aLAP_alpha <- reliability(cov(data.matrix(aLAP_alpha))) #Convert to matrix and calculate alpha
+aLAP_alpha$alpha #Output just alpha
+```
+Ideal HAP (European American): `r round(iHAP_alpha$alpha, 2)`
+
+Ideal LAP (European American): `r round(iLAP_alpha$alpha, 2)`
+
+Actual HAP (European American): `r round(aHAP_alpha$alpha, 2)`
+
+Actual LAP (European American): `r round(aLAP_alpha$alpha, 2)`
+
+Taiwan: 
+```{r, include = FALSE}
+#Ideal HAP
+iHAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "East Asian") %>% 
+  dplyr::select(i1_1, i1_7, i1_9, i2_9) %>%  
+  drop_na()
+iHAP_alpha <- reliability(cov(data.matrix(iHAP_alpha))) #Convert to matrix and calculate alpha
+iHAP_alpha$alpha #Output just alpha
+
+#Ideal LAP
+iLAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "East Asian") %>% 
+  dplyr::select(i1_6, i3_3, i3_9, i3_10) %>%  
+  drop_na()
+iLAP_alpha <- reliability(cov(data.matrix(iLAP_alpha))) #Convert to matrix and calculate alpha
+iLAP_alpha$alpha #Output just alpha
+
+#Actual HAP
+aHAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "East Asian") %>% 
+  dplyr::select(a1_1, a1_7, a1_9, a2_9) %>%  
+  drop_na()
+aHAP_alpha <- reliability(cov(data.matrix(aHAP_alpha))) #Convert to matrix and calculate alpha
+aHAP_alpha$alpha #Output just alpha
+
+#Actual LAP
+aLAP_alpha <- AVI_Demographics %>% 
+  filter(Culture == "East Asian") %>% 
+  dplyr::select(a1_6, a3_3, a3_9, a3_10) %>%  
+  drop_na()
+aLAP_alpha <- reliability(cov(data.matrix(aLAP_alpha))) #Convert to matrix and calculate alpha
+aLAP_alpha$alpha #Output just alpha
+```
+Ideal HAP (Taiwan): `r round(iHAP_alpha$alpha, 2)`
+
+Ideal LAP (Taiwan): `r round(iLAP_alpha$alpha, 2)`
+
+Actual HAP (Taiwan): `r round(aHAP_alpha$alpha, 2)`
+
+Actual LAP (Taiwan): `r round(aLAP_alpha$alpha, 2)`
+
+```{r}
+# #Is trust related to giving?
+# 
+# 
+# model1 <- lm(data = Data, response_i ~ GeneralTrust * reputation)
+# summary(model1)
+# 
+# Data %>%
+#   ggplot(aes(x = GeneralTrust, y = response_i)) +
+#   facet_grid(~Culture) +
+#   geom_jitter(aes(colour = reputation, alpha=0.01), width = 0.2, height = 0.4) +
+#   geom_smooth(method=lm, color='#2C3E50') +
+#   guides(fill=guide_legend(title="Player 2 Expression")) +
+#   scale_fill_manual(values=c("#94B3D7", "#D99594")) #Set correct ribbon colors
+```
+
+# Visualizations for Data_norep
+
+## Offers by Culture
+
+```{r, echo=FALSE, message=FALSE}
+# extract variables relevant for analyses
+Data_subset <- Data_norep %>% 
+  dplyr::select(pID, trial_num_norep, sex_norep, race_norep, expression_norep, response_norep, response_i_norep, responseConvert_norep, responsePPP_norep, Age, Gender, contains("AP"), responseNoVar, FamSES2, Culture) %>% 
+  distinct()
+  
+# compute mean offer for each participant including neutral
+Data_pID <- Data_subset %>%
+  group_by(Culture, pID) %>%
+  dplyr::summarise(give = mean(response_norep, na.rm = T),
+            give_i = mean(response_i_norep, na.rm = T),
+            give_C = mean(responseConvert_norep, na.rm = T),
+            give_PPP = mean(responsePPP_norep, na.rm = T))
+
+# create table
+Data_pID %>%
+  group_by(Culture) %>% 
+  dplyr::summarise(give_Mean = mean(give, na.rm = T),
+            give_SD = sd(give, na.rm = T),
+            give_i_Mean = mean(give_i, na.rm = T),
+            give_i_SD = sd(give_i, na.rm = T),
+            give_C_Mean = mean(give_C, na.rm = T),
+            give_C_SD = sd(give_C, na.rm = T),
+            give_PPP_Mean = mean(give_PPP, na.rm = T),
+            give_PPP_SD = sd(give_PPP, na.rm = T)) %>% 
+  pander()
+
+# histogram of ipsatized offers
+ggplot(Data_pID, aes(x = give_i)) +
+  facet_grid(Culture~.) +
+  geom_histogram() +
+  xlab("Amount given (ipsatized)") + 
+  ylab("Frequency") +
+  ggthemes::theme_few() +
+  ggtitle("Histogram of Ipsatized Offers") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Culture and Expression
+
+```{r, echo=FALSE}
+# summarize across recipient expression and reputation
+summary <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, Culture, expression_norep) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(responseConvert_norep, na.rm = T),
+            mean_i = mean(response_i_norep, na.rm = T),
+            stdv = sd(responseConvert_norep),
+            stdv_i = sd(response_i_norep),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression_norep) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T)) 
+
+# create table: Culture and Expression
+summary %>% pander()
+
+ggplot(summary, aes(x = Culture, y = mean_i, fill = expression_norep)) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+  xlab("Culture") +
+  ylab("Ipsatized Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+ggplot(summary, aes(x = Culture, y = mean, fill = expression_norep)) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+  xlab("Culture") +
+  ylab("Raw Transfer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+# Visualizations for Data (with rep)
+
+## Offers by Culture
+
+```{r, echo=FALSE, message=FALSE}
+# extract variables relevant for analyses
+Data_subset <- Data %>% 
+  dplyr::select(pID, trial_num, sex, target_race, identity, expression, reputation, exact_value, rt, response, response_i, responseConvert, responsePPP, Age, Gender, contains("AP"), responseNoVar, FamSES2, Culture) %>% 
+  distinct()
+  
+# compute mean offer for each participant including neutral
+Data_pID <- Data_subset %>%
+  group_by(Culture, pID) %>%
+  dplyr::summarise(give = mean(response, na.rm = T),
+            give_i = mean(response_i, na.rm = T),
+            give_C = mean(responseConvert, na.rm = T),
+            give_PPP = mean(responsePPP, na.rm = T))
+
+# create table
+Data_pID %>%
+  group_by(Culture) %>% 
+  dplyr::summarise(give_Mean = mean(give, na.rm = T),
+            give_SD = sd(give, na.rm = T),
+            give_i_Mean = mean(give_i, na.rm = T),
+            give_i_SD = sd(give_i, na.rm = T),
+            give_C_Mean = mean(give_C, na.rm = T),
+            give_C_SD = sd(give_C, na.rm = T),
+            give_PPP_Mean = mean(give_PPP, na.rm = T),
+            give_PPP_SD = sd(give_PPP, na.rm = T)) %>% 
+  pander()
+
+# histogram of ipsatized offers
+ggplot(Data_pID, aes(x = give_i)) +
+  facet_grid(Culture~.) +
+  geom_histogram() +
+  xlab("Amount given (ipsatized)") + 
+  ylab("Frequency") +
+  ggthemes::theme_few() +
+  ggtitle("Histogram of Ipsatized Offers") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+# histogram of simply converted offers
+ggplot(Data_pID, aes(x = give_C)) +
+  facet_grid(Culture~.) +
+  geom_histogram() +
+  xlab("Amount given in USD") + 
+  ylab("Frequency") +
+  ggthemes::theme_few() +
+  ggtitle("Histogram of Offers in USD") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+# histogram of PPP converted offers
+ggplot(Data_pID, aes(x = give_PPP)) +
+  facet_grid(Culture~.) +
+  geom_histogram() +
+  xlab("Amount given in USD (PPP Conversion)") + 
+  ylab("Frequency") +
+  ggthemes::theme_few() +
+  ggtitle("Histogram of Offers in USD (PPP Conversion)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Reputation only
+
+```{r, echo=FALSE}
+# summarize across recipient reputation
+summary <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(responseConvert, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(responseConvert),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T)) 
+
+# create table: Reputation alone
+summary %>%
+  dplyr::group_by(reputation) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+  pander()
+
+# ipsatized transfer (figure for paper)
+
+ggplot(summary, aes(x = reputation, y = mean_i)) +
+  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
+  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  xlab("Target Reputation") +
+  ylab("Ipsatized Transfers ($)") +
+  coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+#ggsave("ips_reputation.jpg", width = 6, height = 4)
+
+# raw transfer (figure for paper)
+
+ggplot(summary, aes(x = reputation, y = mean)) +
+  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
+  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfers ($)") +
+  coord_cartesian(ylim = c(0, 10)) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+#ggsave("raw_reputation.jpg", width = 6, height = 4)
+```
+
+## Offers by Expression only
+
+```{r, echo=FALSE}
+# summarize across recipient expression
+summary <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(expression) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(responseConvert, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(responseConvert),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(expression) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T)) 
+
+# create table: Reputation alone
+summary %>%
+  dplyr::group_by(expression) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+  pander()
+
+# ipsatized transfer (figure for paper)
+
+ggplot(summary, aes(x = expression, y = mean_i)) +
+  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
+  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  xlab("Target Expression") +
+  ylab("Ipsatized Transfers ($)") +
+  coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
+  scale_x_discrete(labels=c("neut" = "Neutral", "calm" = "Calm", "exci" = "Excited")) + 
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+# raw transfer (figure for paper)
+
+ggplot(summary, aes(x = expression, y = mean)) +
+  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
+  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  xlab("Target Expression") +
+  ylab("Raw Transfers ($)") +
+  scale_x_discrete(labels=c("neut" = "Neutral", "calm" = "Calm", "exci" = "Excited")) + 
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Culture and Reputation
+
+```{r, echo=FALSE}
+# summarize across recipient reputation
+summary <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(responseConvert, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(responseConvert),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T)) 
+
+# create table: Culture and Reputation 
+summary %>%
+  dplyr::group_by(Culture, reputation) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+  pander()
+
+# ipsatized transfer (figure for paper)
+
+ggplot(summary, aes(x = reputation, y = mean_i, fill = Culture)) +
+  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) + # makes bars thinner
+  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#d99594", "#94b3d7")) +
+  xlab("Target Reputation") +
+  ylab("Ipsatized Transfers ($)") +
+  coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+#ggsave("ips_reputation.jpg", width = 10, height = 6)
+
+# raw transfer (figure for paper)
+
+ggplot(summary, aes(x = reputation, y = mean, fill = Culture)) +
+  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) + # makes bars thinner
+  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  scale_fill_manual(values=c("#d99594", "#94b3d7")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfers ($)") +
+  coord_cartesian(ylim = c(0, 10)) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+#ggsave("raw_reputation.jpg", width = 10, height = 6)
+```
+
+## Offers by Expression and Reputation
+
+```{r, echo=FALSE}
+# summarize across recipient expression and reputation
+summary <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(expression, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(expression, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T)) 
+
+# create table: Expression alone
+summary %>%
+  dplyr::group_by(expression) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+  pander()
+
+# create table: Reputation alone
+summary %>%
+  dplyr::group_by(reputation) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+  pander()
+
+# create table: Both Expression and Reputation
+summary %>% 
+  dplyr::select(expression, reputation, mean, stdv, mean_i, stdv_i) %>% 
+  pander()
+
+ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Culture and Expression 
+
+```{r, echo=FALSE}
+# summarize across recipient culture and expression
+summary <- Data_subset %>%
+  # dplyr::filter(expression != "neut") %>% 
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, expression) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(responseConvert, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(responseConvert),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T)) 
+
+# create table: Both Expression and Reputation 
+summary %>% 
+  dplyr::select(Culture, expression, mean, stdv, mean_i, stdv_i) %>% 
+  pander()
+
+# Ipsatized (figure for paper)
+
+ggplot(summary, aes(x = Culture, y = mean_i, fill = expression)) +
+  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) +
+  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  xlab("Participant Culture") +
+  ylab("Ipsatized Transfers ($)") +
+  scale_x_discrete(labels = c("European American" = "European American", "East Asian" = "Taiwanese")) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+# Raw (figure for paper)
+
+ggplot(summary, aes(x = Culture, y = mean, fill = expression)) +
+  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) +
+  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  xlab("Participant Culture") +
+  ylab("Raw Transfers ($)") +
+  scale_x_discrete(labels = c("European American" = "European American", "East Asian" = "Taiwanese")) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Culture, Expression and Reputation
+
+```{r, echo=FALSE}
+# summarize across recipient expression and reputation
+summary <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, pID, expression, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            mean_conv = mean(responseConvert, na.rm =T),
+            mean_ppp = mean(responsePPP, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            stdv_conv = sd(responseConvert),
+            stdv_ppp = sd(responsePPP),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i/sqrt(n),
+            sem_conv = stdv_conv/sqrt(n),
+            sem_ppp = stdv_ppp/sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            mean_conv = mean(mean_conv, na.rm = T),
+            mean_ppp = mean(mean_ppp, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            stdv_conv = mean(stdv_conv, na.rm = T),
+            stdv_ppp = mean(stdv_ppp, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm. = T),
+            sem_conv = mean(sem_conv, na.rm = T),
+            sem_ppp = mean(sem_ppp, na.rm = T)) 
+
+# create table: Expression alone
+summary %>%
+  dplyr::group_by(Culture, expression) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T),
+            give_conv_Mean = mean(mean_conv, na.rm = T),
+            give_conv_SD = sd(mean_conv, na.rm = T),
+            give_ppp_Mean = mean(mean_ppp, na.rm = T),
+            give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
+  pander()
+
+# create table: Reputation alone
+summary %>%
+  dplyr::group_by(Culture, reputation) %>% 
+  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
+            give_SD = sd(mean, na.rm = T),
+            give_i_Mean = mean(mean_i, na.rm = T),
+            give_i_SD = sd(mean_i, na.rm = T),
+            give_ppp_Mean = mean(mean_ppp, na.rm = T),
+            give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
+  pander()
+
+# create table: Both Expression and Reputation
+summary %>% 
+  dplyr::select(Culture, expression, reputation, mean, stdv, mean_i, stdv_i, mean_ppp, stdv_ppp) %>% 
+  pander()
+
+ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
+  facet_grid(~Culture) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+ggplot(summary, aes(x = reputation, y = mean_conv, fill = expression)) +
+  facet_grid(~Culture) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_conv-sem_conv), ymax = (mean_conv+sem_conv))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer (Simple Conversion $)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+ggplot(summary, aes(x = reputation, y = mean_ppp, fill = expression)) +
+  facet_grid(~Culture) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_ppp-sem_ppp), ymax = (mean_ppp+sem_ppp))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer (PPP Converted $)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Culture, Expression, Reputation and *Race*
+
+```{r, echo=FALSE}
+# summarize across recipient expression, reputation, race
+summary_race <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, pID, expression, reputation, target_race) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression, reputation, target_race) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_race %>%
+  dplyr::select(Culture, expression, reputation, target_race, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
+  facet_grid(Culture ~ target_race) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Culture, Expression, Reputation and *Sex*
+
+```{r, echo=FALSE}
+# summarize across recipient expression, reputation, sex
+summary_sex <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, pID, expression, reputation, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression, reputation, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_sex %>%
+  dplyr::select(Culture, expression, reputation, sex, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
+  facet_grid(Culture ~ sex) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+
+## Offers by Culture, Expression, Reputation, *Race and Sex*
+
+```{r, echo=FALSE}
+# summarize across recipient expression, reputation, race, and sex
+summary_race_sex <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, pID, expression, reputation, target_race, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression, reputation, target_race, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_race_sex %>%
+  dplyr::select(Culture, expression, reputation, target_race, sex, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_race_sex, aes(x = reputation, y = mean_i, fill = expression)) +
+  facet_grid(Culture ~ target_race + sex) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Offers by Expression, Reputation, and target Race/target Sex (No Culture)
+
+```{r}
+# Just expression, reputation, target race:
+
+# summarize across recipient expression, reputation, and race
+summary_race <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, expression, reputation, target_race) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(expression, reputation, target_race) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_race %>%
+  dplyr::select(expression, reputation, target_race, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
+  facet_grid(~target_race) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+# Just expression, reputation, target sex:
+
+# summarize across recipient expression, reputation, and sex
+summary_sex <- Data_subset %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, expression, reputation, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(expression, reputation, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_sex %>%
+  dplyr::select(expression, reputation, sex, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
+  facet_grid(~sex) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Graphs for Gender Effects
+
+```{r}
+# Just participant gender and reputation:
+
+summary_gender <- Data_subset %>%
+  dplyr::filter(!is.na(Gender)) %>% 
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, Gender, reputation) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Gender, reputation) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_gender %>%
+  dplyr::select(reputation, Gender, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_gender, aes(x = reputation, y = mean_i, fill = Gender)) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#94b3d7","#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+# Just culture, participant gender, and target gender:
+
+summary_gender2 <- Data_subset %>%
+  dplyr::filter(!is.na(Gender)) %>% 
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, Culture, Gender, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, Gender, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_gender2 %>%
+  dplyr::select(Culture, Gender, sex, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_gender2, aes(x = Gender, y = mean_i, fill = sex)) +
+  facet_grid(~Culture) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#94b3d7","#d99594")) +
+  xlab("Participant Gender") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+
+# Just culture, reputation, and participant gender:
+
+summary_gender3 <- Data_subset %>%
+  dplyr::filter(!is.na(Gender)) %>% 
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, Culture, reputation, Gender) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response, na.rm = T),
+            mean_i = mean(response_i, na.rm = T),
+            stdv = sd(response),
+            stdv_i = sd(response_i),
+            sem = stdv / sqrt(n),
+            sem_i = stdv_i / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, reputation, Gender) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            mean_i = mean(mean_i, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            stdv_i = mean(stdv_i, na.rm = T),
+            sem = mean(sem, na.rm = T),
+            sem_i = mean(sem_i, na.rm = T))
+
+# create table
+summary_gender3 %>%
+  dplyr::select(Culture, reputation, Gender, mean_i, stdv_i) %>%
+  pander()
+
+ggplot(summary_gender3, aes(x = reputation, y = mean_i, fill = Gender)) +
+  facet_grid(~Culture) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+  scale_fill_manual(values=c("#94b3d7","#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+# Confirmatory analysis
+
+## Preparation
+
+```{r}
+# convert SES from factor into numeric
+Data_norep$FamSES2num <- as.numeric(Data_norep$FamSES2)
+Data$FamSES2num <- as.numeric(Data$FamSES2)
+
+# effect code Culture so that output is main effect 
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+contrasts(Data_norep$Culture) <- cbind(AsianVsEur = c(-1, 1))
+```
+
+```{r}
+# save Data as csv to combine with version 1 of reputation study
+write.csv(Data, file = "../../Studies 1 2 Combined/Study2Data.csv")
+```
+
+```{r}
+# subset data to just expression levels "calm" vs. "excited" (without "neutral")
+Data_noNeut <- Data %>%
+  dplyr::filter(expression != "neut") %>%
+  # refactor to exclude neutral
+  dplyr::mutate(expression = factor(expression, levels = c("calm", "exci")))
+
+# check levels
+contrasts(Data_noNeut$expression)
+contrasts(Data_norep$expression_norep)
+```
+
+## Orthogonal contrasts:
+
+# Data_norep 
+```{r}
+# EXPRESSION 
+# expression: calm vs. excited
+contrasts(Data_norep$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                      orthogonal = c(2, -1, -1))
+# expression: neutral vs. calm
+contrasts(Data_norep$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      orthogonal = c(-1, -1, 2))
+# expression: excited vs. neutral
+contrasts(Data_norep$expression)   <- cbind(ExciVsNeut = c(-1, 0, 1),
+                                      orthogonal = c(-1, 2, -1))
+
+contrasts(Data_norep$Culture) <- cbind(AsiVsEur = c(-1,1))
+
+contrasts(Data_norep$Gender) <- cbind(FemVsMal = c(-1,1))
+
+contrasts(Data_norep$sex_norep) <- cbind(FemVsMal = c(1,-1))
+
+contrasts(Data_norep$race_norep) <- cbind(AsiVsEur = c(1,-1))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+# model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep * sex_norep * race_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+# summary(model_ipsatized)
+```
+
+```{r}
+# probe Culture x Expression interaction by dummy coding
+
+# expression: calm vs. excited
+contrasts(Data_norep$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                      orthogonal = c(2, -1, -1))
+# # expression: neutral vs. calm
+# contrasts(Data_norep$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+#                                       orthogonal = c(-1, -1, 2))
+
+# probe expression for Eur American (Eur American == 0, reference)
+contrasts(Data_norep$Culture) <- cbind(EurAmerRef = c(0,1))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+# probe expression for East Asian (Asian == 0, reference)
+contrasts(Data_norep$Culture) <- cbind(AsianRef = c(1,0))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+```
+
+
+# Data (with rep)
+```{r}
+# EXPRESSION 
+# expression: calm vs. excited
+contrasts(Data$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                      orthogonal = c(2, -1, -1))
+# expression: neutral vs. calm
+contrasts(Data$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      orthogonal = c(-1, -1, 2))
+# expression: excited vs. neutral
+contrasts(Data$expression)   <- cbind(ExciVsNeut = c(-1, 0, 1),
+                                      orthogonal = c(-1, 2, -1))
+
+# REPUTATION
+# reputation: linear 
+contrasts(Data$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+# reputation: effect coding
+contrasts(Data$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      HighVsMod = c(0, -1, 1))
+
+contrasts(Data$Culture) <- cbind(AsiVsEur = c(-1,1))
+contrasts(Data$Gender) <- cbind(FemVsMal = c(-1,1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+```
+
+### Probe the Culture x reputation interaction
+
+```{r}
+# By culture:
+# only European Americans (Eur Americ == 0, reference)
+contrasts(Data$Culture) <- cbind(eurRef = c(0, 1))
+contrasts(Data$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      HighVsMod = c(0, -1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+
+# only Taiwanese (Asian == 0, reference)
+contrasts(Data$Culture) <- cbind(asianRef = c(1, 0))
+contrasts(Data$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      HighVsMod = c(0, -1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+
+# By reputation:
+# only low reputation (low == 0, reference)
+contrasts(Data$reputation)   <- cbind(lowRef1 = c(0, 1, 0),
+                                      lowRef2 = c(0, 0, 1))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+
+# only mod reputation (mod == 0, reference)
+contrasts(Data$reputation)   <- cbind(modRef1 = c(1, 0, 0),
+                                      modRef2 = c(0, 0, 1))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+
+# only high reputation (high == 0, reference)
+contrasts(Data$reputation)   <- cbind(highRef1 = c(0, 1, 0),
+                                      highRef2 = c(1, 0, 0))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+```
+
+### Probe the Culture x expression (calm/excited) interaction
+
+```{r}
+# By culture:
+# only European Americans (Eur Americ == 0, reference)
+contrasts(Data$Culture) <- cbind(eurRef = c(0, 1))
+contrasts(Data$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                      orthogonal = c(2, -1, -1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+
+# only Taiwanese (Asian == 0, reference)
+contrasts(Data$Culture) <- cbind(asianRef = c(1, 0))
+contrasts(Data$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                      orthogonal = c(2, -1, -1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data, responseConvert ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = responseConvert
+summary(model_simpleConv)
+
+# By expression:
+# only excited expressions (excited == 0, reference)
+contrasts(Data$expression)   <- cbind(exciRef1 = c(1, 0, 0),
+                                      exciRef2 = c(0, 1, 0))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+# only calm expressions (calm == 0, reference)
+contrasts(Data$expression)   <- cbind(calmRef1 = c(1, 0, 0),
+                                      calmRef2 = c(0, 0, 1))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+```
+
+### Probe the Culture x expression (neutral/excited) interaction
+
+```{r}
+# By culture:
+# only European Americans (Eur Americ == 0, reference)
+contrasts(Data$Culture) <- cbind(eurRef = c(0, 1))
+contrasts(Data$expression)   <- cbind(NeutVsExci = c(1, 0, -1),
+                                      orthogonal = c(-1, 2, -1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+# only Taiwanese (Asian == 0, reference)
+contrasts(Data$Culture) <- cbind(asianRef = c(1, 0))
+contrasts(Data$expression)   <- cbind(NeutVsExci = c(1, 0, -1),
+                                      orthogonal = c(-1, 2, -1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+# By expression:
+# only excited expressions (excited == 0, reference)
+contrasts(Data$expression)   <- cbind(exciRef1 = c(1, 0, 0),
+                                      exciRef2 = c(0, 1, 0))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+
+# only neutral expressions (neut == 0, reference)
+contrasts(Data$expression)   <- cbind(neutRef1 = c(0, 1, 0),
+                                      neutRef2 = c(0, 0, 1))
+contrasts(Data$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) # dv = response_i
+summary(model_ipsatized)
+```
+
+
+### ANOVA versions of all main analyses above (ipsatized response only)
+
+```{r}
+# aov_ipsatized <- aov(data = Data, response_i ~ Culture * reputation * expression + Error(pID/(reputation*expression)), na.action = na.exclude) # dv = response_i
+# summary(aov_ipsatized) # get main effects
+# eta_sq(aov_ipsatized, partial = TRUE) # get eta squared for partial effects
+# 
+# emm <- emmeans(aov_ipsatized, ~ Culture * expression) # probe
+# pairs <- pairs(emm) # this outputs p value
+# confint(pairs) # this outputs confidence interval
+```
+
+
+### Do analyses separately by culture
+
+```{r}
+# by culture 
+
+Data_EuropeanAmericans <- Data %>%
+  filter(Culture == "European American")
+
+Data_EastAsian <- Data %>%
+  filter(Culture == "East Asian")
+
+# European Americans: linear trends for reputation, effect coding expression
+
+contrasts(Data_EuropeanAmericans$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+contrasts(Data_EuropeanAmericans$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+EuropeanAmerican1 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EuropeanAmerican1)
+
+# European Americans: effect coding both expression and reputation
+
+contrasts(Data_EuropeanAmericans$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+contrasts(Data_EuropeanAmericans$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+EuropeanAmerican2 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EuropeanAmerican2)
+
+# East Asians: linear trends for reputation, effect coding expression
+
+contrasts(Data_EastAsian$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+contrasts(Data_EastAsian$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+EastAsian1 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EastAsian1)
+
+# East Asians: effect coding both expression and reputation
+
+contrasts(Data_EastAsian$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+contrasts(Data_EastAsian$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+EastAsian2 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EastAsian2)
+```
+
+### Do analyses separately by reputation 
+
+```{r}
+# effect coding expression
+
+contrasts(Data$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+# low reputation
+DataLowRep <- Data %>%
+  filter(reputation == "low")
+
+model_lowrep <- lmer(data = DataLowRep, response_i ~ 1 + Culture * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_lowrep)
+
+
+# moderate reputation
+DataModRep <- Data %>%
+  filter(reputation == "mod")
+
+model_modrep <- lmer(data = DataModRep, response_i ~ 1 + Culture * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_modrep)
+
+
+# high reputation 
+DataHighRep <- Data %>%
+  filter(reputation == "high")
+
+model_highrep <- lmer(data = DataHighRep, response_i ~ 1 + Culture * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_highrep)
+```
+
+## Individual differences in ideal affect
+```{r}
+#Model 1: Player 2 expression, reputation, and ideal HAP as predictors for amount given by participants, controlling for actual HAP 
+model1 <- lmer(data = Data, response_i ~ 1 + expression * reputation * scale(iHAP, scale = F) + scale(aHAP, scale = F) + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model1)
+
+#Model 2: Player 2 expression, reputation, and ideal LAP as predictors for amount given by participants, controlling for actual LAP 
+model2 <- lmer(data = Data, response_i ~ 1 + expression * reputation * scale(iLAP, scale = F) + scale(aLAP, scale = F) + + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model2)
+
+#Plot
+expr_colors=c("#a3c1ad","#73a2e9", "#a22127") #Set correct colors for "expression" variable for the jittered points in the graphs below
+
+#iHAP
+Data %>% 
+  ggplot(aes(x = iHAP, y = response_i, fill = expression)) +
+  facet_grid(~reputation) +
+  geom_jitter(aes(colour = expression), alpha = 0.05, width = 0.2, height = 0.4) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  guides(fill=guide_legend(title = "Expression")) +
+  scale_fill_manual(values=c("#a3c1ad", "#73a2e9", "#a22127")) + #Set correct ribbon colors
+  scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
+  xlab("Participant ideal HAP") +
+  ylab("Amount Given (ipsatized)") 
+
+#iHAP without reputation facet grid
+Data %>% 
+  ggplot(aes(x = iHAP, y = response_i, fill = expression)) +
+  geom_jitter(aes(colour = expression), alpha = 0.05, width = 0.2, height = 0.4) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  guides(fill=guide_legend(title = "Expression")) +
+  scale_fill_manual(values=c("#a3c1ad", "#73a2e9", "#a22127")) + #Set correct ribbon colors
+  scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
+  xlab("Participant ideal HAP") +
+  ylab("Amount Given (ipsatized)") 
+
+#iLAP
+Data %>% 
+  ggplot(aes(x = iLAP, y = response_i, fill = expression)) +
+  facet_grid(~reputation) +
+  geom_jitter(aes(colour = expression), alpha = 0.05, width = 0.2, height = 0.4) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  guides(fill=guide_legend(title = "Expression")) +
+  scale_fill_manual(values=c("#a3c1ad", "#73a2e9", "#a22127")) + #Set correct ribbon colors
+  scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
+  xlab("Participant ideal LAP") +
+  ylab("Amount Given (ipsatized)") 
+  #ylim(c(-.5,.5))
+```
+
+## Look at effects of target race and target sex
+
+```{r}
+# full model (too complicated):
+
+contrasts(Data$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+contrasts(Data$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+#just do target race and sex
+target_char1 <- lmer(data = Data, response_i ~ 1 + target_race * sex + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(target_char1)
+
+# add Culture 
+target_char2 <- lmer(data = Data, response_i ~ 1 + Culture * target_race * sex + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(target_char2)
+
+# add expression
+target_char3 <- lmer(data = Data, response_i ~ 1 + Culture * expression * target_race * sex + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(target_char3)
+
+# full: add reputation
+target_char3 <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression * target_race * sex + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(target_char3)
+```
+
+
+## Gender analyses
+
+```{r}
+target_char3 <- lmer(data = Data, response_i ~ 1 + Culture * reputation * expression * target_race * sex * Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(target_char3)
+
+# separate dataframe into males and females only
+Data_Males <- Data %>% 
+  filter(Gender == "Male")
+
+Data_Females <- Data %>% 
+  filter(Gender == "Female")
+
+# plot descriptives
+
+summary <- Data %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, expression, reputation, Gender, target_race, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response_i, na.rm = T),
+            stdv = sd(response_i),
+            sem = stdv / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(expression, reputation, Gender, target_race, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            sem = mean(sem, na.rm = T))
+
+genderSummary <- summary %>%
+  filter(expression != "neut") %>%
+  filter(Gender == "Male" | Gender == "Female")
+
+ggplot(genderSummary, aes(x = reputation, y = mean, fill = expression)) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  scale_fill_manual(values=c("#94b3d7", "#d99594")) +
+  facet_grid(~ Gender * target_race * sex) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") 
+
+# # males only
+# # full model
+# Data_Males$reputation <- relevel(Data_Males$reputation, ref = "low")
+# model_males <- lmer(data = Data_Males, response ~ reputation * expression * target_race * sex +
+#                       FamSES2num + (1|pID), REML=FALSE)
+# summary(model_males)
+# 
+# # females only
+# # full model
+# Data_Females$reputation <- relevel(Data_Females$reputation, ref = "low")
+# model_females <- lmer(data = Data_Females, response ~ reputation * expression * target_race * sex +
+#                         FamSES2num + (1|pID), REML=FALSE)
+# summary(model_females)
+```
+
+# Exploratory analysis: trait ratings 
+```{r}
+
+contrasts(Data$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                      CalmVsExci = c(0, -1, 1))
+
+contrasts(Data$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+competent <- lmer(data = Data, trait_competent ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(competent)
+
+trustworthy <- lmer(data = Data, trait_trustworthy ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(trustworthy)
+
+financiallyNeedy <- lmer(data = Data, trait_financiallyNeedy ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(financiallyNeedy)
+
+dominant <- lmer(data = Data, trait_dominant ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(dominant)
+
+friendly <- lmer(data = Data, trait_friendly ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(friendly)
+```
+## Visualize trait ratings 
+
+```{r}
+# all traits together
+
+traitRatingsLong <- Data %>% 
+  pivot_longer(cols = starts_with("trait_"), names_to = "Trait", values_to = "Value")
+
+ggplot(traitRatingsLong, aes(x = Trait, y = Value, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_x_discrete(limits=c("trait_competent","trait_trustworthy", "trait_financiallyNeedy","trait_dominant", "trait_friendly"),
+                   labels=c("Comp", "Trustw", "FinNeed", "Dom", "Friend")) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594")) +
+  theme(text = element_text(size=16, family="serif"))
+
+# each trait separately by reputation (continuous)
+
+ggplot(Data, aes(x = exact_value, y = trait_competent, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data, aes(x = exact_value, y = trait_trustworthy, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+  
+ggplot(Data, aes(x = exact_value, y = trait_financiallyNeedy, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data, aes(x = exact_value, y = trait_dominant, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data, aes(x = exact_value, y = trait_friendly, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# each trait separately by expression 
+
+ggplot(Data, aes(x = expression, y = trait_competent, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594")) 
+
+ggplot(Data, aes(x = expression, y = trait_trustworthy, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594")) 
+  
+ggplot(Data, aes(x = expression, y = trait_financiallyNeedy, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+ggplot(Data, aes(x = expression, y = trait_dominant, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+ggplot(Data, aes(x = expression, y = trait_friendly, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+# plot trait ratings as a function of BOTH reputation and expression
+
+ggplot(Data, aes(x = exact_value, y = trait_competent, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data, aes(x = exact_value, y = trait_competent, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+
+
+ggplot(Data, aes(x = exact_value, y = trait_trustworthy, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data, aes(x = exact_value, y = trait_financiallyNeedy, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data, aes(x = exact_value, y = trait_financiallyNeedy, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+
+ggplot(Data, aes(x = exact_value, y = trait_dominant, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data, aes(x = exact_value, y = trait_financiallyNeedy, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+
+ggplot(Data, aes(x = exact_value, y = trait_friendly, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+```
+
+Create perceived trustworthiness graph that is comparable to the giving version:
+```{r}
+# summarize across recipient expression and reputation
+summary <- Data %>%
+  dplyr::select(pID, Culture, trait_trustworthy, expression, reputation) %>% 
+  dplyr::ungroup() %>%
+  dplyr::group_by(Culture, pID, expression, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(trait_trustworthy, na.rm = T),
+            stdv = sd(trait_trustworthy, na.rm = T),
+            sem = stdv / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(Culture, expression, reputation) %>%
+  dplyr::summarise(n = n(),
+            mean = mean(mean, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            sem = mean(sem, na.rm = T)) 
+
+# create table: Both Expression and Reputation
+summary %>% 
+  dplyr::select(Culture, expression, reputation, mean, stdv) %>% 
+  pander()
+
+ggplot(summary, aes(x = reputation, y = mean, fill = expression)) +
+  facet_grid(~Culture) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Perceived Trustworthiness") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Factor analysis of trait ratings
+
+```{r}
+# whole sample
+FactorAnalysisWhole <- Data %>% 
+  dplyr::select(contains("trait_")) %>%
+  drop_na()
+
+fit <- factanal(FactorAnalysisWhole, 2, rotation="varimax")
+print(fit, digits=2, cutoff=.3, sort=TRUE)
+
+# US sample
+FactorAnalysisUS <- Data %>% 
+  dplyr::filter(Culture == "European American") %>% 
+  dplyr::select(contains("trait_")) %>%
+  drop_na()
+
+fit <- factanal(FactorAnalysisUS, 2, rotation="varimax")
+print(fit, digits=2, cutoff=.3, sort=TRUE)
+
+# Taiwan sample
+FactorAnalysisTaiwan <- Data %>% 
+  dplyr::filter(Culture == "East Asian") %>% 
+  dplyr::select(contains("trait_")) %>%
+  drop_na()
+
+fit <- factanal(FactorAnalysisTaiwan, 2, rotation="varimax")
+print(fit, digits=2, cutoff=.3, sort=TRUE)
+```
+
+
+
+# Analyses without neutral expression condition 
+
+```{r}
+# linear trends for reputation
+
+contrasts(Data_noNeut$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+model_ipsatized <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+# effect coding for reputation
+
+contrasts(Data_noNeut$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+model_ipsatized <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_ipsatized)
+
+# # probing Culture x Expression interaction
+# 
+# Data_noNeut_EastAsian <- Data_noNeut %>% 
+#   filter(Culture == "East Asian")
+# 
+# model_EastAsian <- lmer(data = Data_noNeut_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+# summary(model_EastAsian)
+# 
+# Data_noNeut_EurAmer <- Data_noNeut %>% 
+#   filter(Culture == "European American")
+# 
+# model_EurAmer <- lmer(data = Data_noNeut_EurAmer, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+# summary(model_EurAmer)
+```
+
+### Do analyses separately by culture
+
+```{r}
+# by culture 
+
+Data_EuropeanAmericans <- Data_noNeut %>%
+  filter(Culture == "European American")
+
+Data_EastAsian <- Data_noNeut %>%
+  filter(Culture == "East Asian")
+
+# European Americans: linear trends for reputation
+
+contrasts(Data_EuropeanAmericans$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+EuropeanAmerican1 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EuropeanAmerican1)
+
+# European Americans: effect coding for reputation
+
+contrasts(Data_EuropeanAmericans$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+EuropeanAmerican2 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EuropeanAmerican2)
+
+# East Asians: linear trends for reputation
+
+contrasts(Data_EastAsian$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+EastAsian1 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EastAsian1)
+
+# East Asians: effect coding for reputation
+
+contrasts(Data_EastAsian$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+EastAsian2 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(EastAsian2)
+```
+
+### Do analyses separately by reputation
+
+```{r}
+# low reputation
+DataLowRep <- Data_noNeut %>%
+  filter(reputation == "low")
+
+model_lowrep <- lmer(data = DataLowRep, response_i ~ 1 + Culture * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_lowrep)
+
+
+# moderate reputation
+DataModRep <- Data_noNeut %>%
+  filter(reputation == "mod")
+
+model_modrep <- lmer(data = DataModRep, response_i ~ 1 + Culture * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_modrep)
+
+
+# high reputation 
+DataHighRep <- Data_noNeut %>%
+  filter(reputation == "high")
+
+model_highrep <- lmer(data = DataHighRep, response_i ~ 1 + Culture * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model_highrep)
+```
+
+## Individual differences in ideal affect
+```{r}
+#Model 1: Player 2 expression, reputation, and ideal HAP as predictors for amount given by participants, controlling for actual HAP 
+model1 <- lmer(data = Data_noNeut, response_i ~ 1 + expression * reputation * scale(iHAP, scale = F) + scale(aHAP, scale = F) + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model1)
+
+#Model 2: Player 2 expression, reputation, and ideal LAP as predictors for amount given by participants, controlling for actual LAP 
+model2 <- lmer(data = Data_noNeut, response_i ~ 1 + expression * reputation * scale(iLAP, scale = F) + scale(aLAP, scale = F) + + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(model2)
+
+#Plot
+expr_colors=c("#73a2e9", "#a22127") #Set correct colors for "expression" variable for the jittered points in the graphs below
+
+#iHAP
+Data_noNeut %>% 
+  ggplot(aes(x = iHAP, y = response_i, fill = expression)) +
+  facet_grid(~reputation) +
+  geom_jitter(aes(colour = expression), alpha = 0.05, width = 0.2, height = 0.4) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  guides(fill=guide_legend(title = "Expression")) +
+  scale_fill_manual(values=c("#73a2e9", "#a22127")) + #Set correct ribbon colors
+  scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
+  xlab("Participant ideal HAP") +
+  ylab("Amount Given (ipsatized)") 
+
+#iHAP without reputation facet grid
+Data_noNeut %>% 
+  ggplot(aes(x = iHAP, y = response_i, fill = expression)) +
+  geom_jitter(aes(colour = expression), alpha = 0.05, width = 0.2, height = 0.4) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  guides(fill=guide_legend(title = "Expression")) +
+  scale_fill_manual(values=c("#73a2e9", "#a22127")) + #Set correct ribbon colors
+  scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
+  xlab("Participant ideal HAP") +
+  ylab("Amount Given (ipsatized)") 
+
+#iLAP
+Data_noNeut %>% 
+  ggplot(aes(x = iLAP, y = response_i, fill = expression)) +
+  facet_grid(~reputation) +
+  geom_jitter(aes(colour = expression), alpha = 0.05, width = 0.2, height = 0.4) + 
+  geom_smooth(method=lm, color='#2C3E50') +
+  guides(fill=guide_legend(title = "Expression")) +
+  scale_fill_manual(values=c("#73a2e9", "#a22127")) + #Set correct ribbon colors
+  scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
+  xlab("Participant ideal LAP") +
+  ylab("Amount Given (ipsatized)") 
+  #ylim(c(-.5,.5))
+```
+
+## Look at effects of target race and target sex
+
+```{r}
+# full model (too complicated):
+
+contrasts(Data_noNeut$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
+                                      ModVsHigh = c(0, -1, 1))
+
+# full: add reputation
+target_char <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression * target_race * sex + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(target_char)
+```
+
+
+## Gender analyses
+
+```{r}
+gender <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression * target_race * sex * Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(gender)
+
+#contrasts(Data_noNeut$reputation)
+
+# plot descriptives
+
+summary <- Data_noNeut %>%
+  # calculate for each subject
+  dplyr::ungroup() %>%
+  dplyr::group_by(pID, expression, reputation, Gender, target_race, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(response_i, na.rm = T),
+            stdv = sd(response_i),
+            sem = stdv / sqrt(n)) %>%
+  # calculate across subjects
+  dplyr::group_by(expression, reputation, Gender, target_race, sex) %>%
+  dplyr::summarize(n = n(),
+            mean = mean(mean, na.rm = T),
+            stdv = mean(stdv, na.rm = T),
+            sem = mean(sem, na.rm = T))
+
+genderSummary <- summary %>%
+  dplyr::filter(expression != "neut") %>%
+  dplyr::filter(Gender == "Male" | Gender == "Female")
+
+ggplot(genderSummary, aes(x = reputation, y = mean, fill = expression)) +
+  geom_bar(stat = "identity", position="dodge") +
+  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+  scale_fill_manual(values=c("#94b3d7", "#d99594")) +
+  facet_grid(~ Gender * target_race * sex) +
+  xlab("Target Reputation") +
+  ylab("Mean Offer ($)") 
+
+# # males only
+# # full model
+# Data_Males$reputation <- relevel(Data_Males$reputation, ref = "low")
+# model_males <- lmer(data = Data_Males, response ~ reputation * expression * target_race * sex +
+#                       FamSES2num + (1|pID), REML=FALSE)
+# summary(model_males)
+# 
+# # females only
+# # full model
+# Data_Females$reputation <- relevel(Data_Females$reputation, ref = "low")
+# model_females <- lmer(data = Data_Females, response ~ reputation * expression * target_race * sex +
+#                         FamSES2num + (1|pID), REML=FALSE)
+# summary(model_females)
+```
+
+## Exploratory analysis: trait ratings 
+```{r}
+contrasts(Data_noNeut$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
+                                      reput_quad = c(-1, 2, -1))
+
+competent <- lmer(data = Data_noNeut, trait_competent ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(competent)
+
+trustworthy <- lmer(data = Data_noNeut, trait_trustworthy ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(trustworthy)
+
+financiallyNeedy <- lmer(data = Data_noNeut, trait_financiallyNeedy ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(financiallyNeedy)
+
+dominant <- lmer(data = Data_noNeut, trait_dominant ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(dominant)
+
+friendly <- lmer(data = Data_noNeut, trait_friendly ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
+summary(friendly)
+```
+## Visualize trait ratings 
+
+```{r}
+# all traits together
+traitRatingsLong <- Data_noNeut %>% 
+  pivot_longer(cols = starts_with("trait_"), names_to = "Trait", values_to = "Value")
+
+ggplot(traitRatingsLong, aes(x = Trait, y = Value, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  guides(fill=guide_legend(title="Culture")) +
+  scale_x_discrete(limits=c("trait_competent","trait_trustworthy", "trait_financiallyNeedy","trait_dominant", "trait_friendly"),
+                   labels=c("Comp", "Trustw", "FinNeed", "Dom", "Friend")) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594")) +
+  theme(text = element_text(size=16, family="serif"))
+
+# each trait separately by reputation (continuous)
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_competent, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_trustworthy, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+  
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_financiallyNeedy, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_dominant, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data_noNeut, aes(x = reputation, y = trait_dominant, fill = Culture)) +
+#   geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+#   stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+#   coord_cartesian(ylim = c(1, 7)) +
+#   scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_friendly, color = Culture)) +
+  geom_jitter(alpha = .2, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# each trait separately by expression 
+
+ggplot(Data_noNeut, aes(x = expression, y = trait_competent, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594")) 
+
+ggplot(Data_noNeut, aes(x = expression, y = trait_trustworthy, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594")) 
+  
+ggplot(Data_noNeut, aes(x = expression, y = trait_financiallyNeedy, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+ggplot(Data_noNeut, aes(x = expression, y = trait_dominant, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+ggplot(Data_noNeut, aes(x = expression, y = trait_friendly, fill = Culture)) +
+  geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+  stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+  coord_cartesian(ylim = c(1, 7)) +
+  scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+# ggplot(Data_noNeut, aes(x = reputation, y = trait_friendly, fill = expression)) +
+#   geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
+#   stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
+#   coord_cartesian(ylim = c(1, 7)) +
+#   scale_fill_manual(values=c("#94B3D7", "#D99594"))
+
+# plot trait ratings as a function of BOTH reputation and expression
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_competent, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data_noNeut, aes(x = exact_value, y = trait_competent, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_trustworthy, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_financiallyNeedy, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data_noNeut, aes(x = exact_value, y = trait_financiallyNeedy, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_dominant, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data_noNeut, aes(x = exact_value, y = trait_financiallyNeedy, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+
+ggplot(Data_noNeut, aes(x = exact_value, y = trait_friendly, color = Culture)) +
+  facet_grid(~expression) +
+  geom_jitter(alpha = .1, height = .5, width = 5) +
+  geom_smooth(method = "loess") +
+  scale_color_manual(values=c("#94B3D7", "#D99594")) +
+  xlab("Reputation")
+
+# ggplot(Data_noNeut, aes(x = exact_value, y = trait_friendly, color = expression)) +
+#   geom_jitter(alpha = .1, height = .5, width = 5) +
+#   geom_smooth(method = "loess") +
+#   scale_color_manual(values = expr_colors) +
+#   xlab("Reputation")
+```
+
+## Mediation analyses: Culture --> trait rating (excited vs. calm) --> giving (excited vs. calm)
+
+First, compute two difference scores by:
+
+(1) subtracting participants’ ratings of trustworthiness of calm recipients from those of excited recipients, collapsing across recipient reputation, race and sex
+
+(2) subtracting participants’ offers to calm recipients from those to excited recipients, collapsing across recipient reputation, race and sex
+
+For reporting results: https://towardsdatascience.com/doing-and-reporting-your-first-mediation-analysis-in-r-2fe423b92171
+
+```{r}
+# prepare data 
+
+# calculate per-participant difference in giving and traits between calm and excited targets (on average)
+
+computeDiffs <- Data_noNeut %>% 
+  dplyr::select(contains("trait_"), pID, expression, response_i) %>% 
+  dplyr::group_by(pID, expression) %>% 
+  dplyr::summarise(response_i_mean = mean(response_i, na.rm = T),
+            competence = mean(trait_competent, na.rm = T),
+            trustworthy = mean(trait_trustworthy, na.rm = T),
+            financiallyNeedy = mean(trait_financiallyNeedy, na.rm = T),
+            dominant = mean(trait_dominant, na.rm = T),
+            friendly = mean(trait_friendly, na.rm = T)) %>% 
+  pivot_wider(names_from = expression, values_from = c(response_i_mean, competence, trustworthy, financiallyNeedy, dominant, friendly)) %>% 
+  dplyr::mutate(responseRatio = response_i_mean_exci/response_i_mean_calm,
+         responseDiff = response_i_mean_exci - response_i_mean_calm,
+         competenceDiff = competence_exci - competence_calm,
+         trustworthyDiff = trustworthy_exci - trustworthy_calm,
+         financiallyNeedyDiff = financiallyNeedy_exci - financiallyNeedy_calm,
+         dominantDiff = dominant_exci - dominant_calm,
+         friendlyDiff = friendly_exci - friendly_calm)
+
+# prepare to merge with this dataset that contains other important vars 
+otherVars <- Data_noNeut %>% 
+  dplyr::select(pID, Culture, Gender, Age, FamSES2num, aHAP, aLAP, iHAP, iLAP) %>% 
+  distinct()
+
+mediationData <- left_join(otherVars, computeDiffs, by = "pID") # Add computed diff scores to otherVars
+
+ggplot(mediationData, aes(x = Culture, y = responseDiff)) +
+  geom_point()
+```
+
+### Competence 
+```{r}
+# # step 1: x -> y
+# summary(lm(responseDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 2: x -> m
+# summary(lm(competenceDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 3: x -> m
+# summary(lm(responseDiff ~ competenceDiff + Culture + Gender + Age + FamSES2num, data = mediationData))
+
+# step 1: x -> y 
+summary(lm(responseDiff ~ Culture, data = mediationData))
+
+# step 2: x -> m 
+summary(lm(competenceDiff ~ Culture, data = mediationData))
+
+# step 3: x -> m 
+summary(lm(responseDiff ~ competenceDiff + Culture, data = mediationData))
+
+# set up models
+model.M <- lm(competenceDiff ~ Culture, data = mediationData)
+model.Y <- lm(responseDiff ~ Culture + competenceDiff, data = mediationData)
+
+results <- mediation::mediate(model.M, model.Y, treat='Culture', mediator='competenceDiff', boot = TRUE, sims=1000, control.value="East Asian", treat.value="European American")
+summary(results)
+
+# for reporting mediator --> DV arrow
+summary(lm(responseDiff ~ competenceDiff, data = mediationData))
+```
+
+### Trustworthiness 
+```{r}
+# # step 1: x -> y 
+# summary(lm(responseDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 2: x -> m 
+# summary(lm(trustworthyDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 3: x -> m 
+# summary(lm(responseDiff ~ trustworthyDiff + Culture + Gender + Age + FamSES2num, data = mediationData))
+
+# step 1: x -> y 
+summary(lm(responseDiff ~ Culture, data = mediationData))
+
+# step 2: x -> m 
+summary(lm(trustworthyDiff ~ Culture, data = mediationData))
+
+# step 3: x -> m 
+summary(lm(responseDiff ~ trustworthyDiff + Culture, data = mediationData))
+
+# set up models
+model.M <- lm(trustworthyDiff ~ Culture, data = mediationData)
+model.Y <- lm(responseDiff ~ Culture + trustworthyDiff, data = mediationData)
+
+results <- mediation::mediate(model.M, model.Y, treat='Culture', mediator='trustworthyDiff', boot = TRUE, sims=1000, control.value="East Asian", treat.value="European American")
+summary(results)
+
+# for reporting mediator --> DV arrow
+summary(lm(responseDiff ~ trustworthyDiff, data = mediationData))
+```
+### Dominance 
+```{r}
+# # step 1: x -> y 
+# summary(lm(responseDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 2: x -> m 
+# summary(lm(dominantDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 3: x -> m 
+# summary(lm(responseDiff ~ dominantDiff + Culture + Gender + Age + FamSES2num, data = mediationData))
+
+# step 1: x -> y 
+summary(lm(responseDiff ~ Culture, data = mediationData))
+
+# step 2: x -> m 
+summary(lm(dominantDiff ~ Culture, data = mediationData))
+
+# step 3: x -> m 
+summary(lm(responseDiff ~ dominantDiff + Culture, data = mediationData))
+
+# set up models
+model.M <- lm(dominantDiff ~ Culture, data = mediationData)
+model.Y <- lm(responseDiff ~ Culture + dominantDiff, data = mediationData)
+
+results <- mediation::mediate(model.M, model.Y, treat='Culture', mediator='dominantDiff', boot = TRUE, sims=1000, control.value="East Asian", treat.value="European American")
+summary(results)
+
+# for reporting mediator --> DV arrow
+summary(lm(responseDiff ~ dominantDiff, data = mediationData))
+```
+
+### Friendliness
+```{r}
+# # step 1: x -> y 
+# summary(lm(responseDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 2: x -> m 
+# summary(lm(friendlyDiff ~ Culture + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 3: x -> m 
+# summary(lm(responseDiff ~ friendlyDiff + Culture + Gender + Age + FamSES2num, data = mediationData))
+
+# step 1: x -> y 
+summary(lm(responseDiff ~ Culture, data = mediationData))
+
+# step 2: x -> m 
+summary(lm(friendlyDiff ~ Culture, data = mediationData))
+
+# step 3: x -> m 
+summary(lm(responseDiff ~ friendlyDiff + Culture, data = mediationData))
+
+# set up models
+model.M <- lm(friendlyDiff ~ Culture, data = mediationData)
+model.Y <- lm(responseDiff ~ Culture + friendlyDiff, data = mediationData)
+
+results <- mediation::mediate(model.M, model.Y, treat='Culture', mediator='friendlyDiff', boot = TRUE, sims=1000, control.value="East Asian", treat.value="European American")
+summary(results)
+
+# for reporting mediator --> DV arrow
+summary(lm(responseDiff ~ friendlyDiff, data = mediationData))
+```
+
+
+## Mediation analyses: *Reputation* --> trait rating (excited vs. calm) --> giving (excited vs. calm)
+
+(Use same two difference scores computed above)
+
+For reporting results: https://towardsdatascience.com/doing-and-reporting-your-first-mediation-analysis-in-r-2fe423b92171
+
+```{r}
+# prepare data 
+
+# calculate per-participant difference in giving and traits between calm and excited targets (on average)
+
+computeDiffs <- Data_noNeut %>% 
+  dplyr::select(contains("trait_"), pID, expression, reputation, response_i) %>% 
+  dplyr::group_by(pID, expression, reputation) %>% 
+  dplyr::summarise(response_i_mean = mean(response_i, na.rm = T),
+            competence = mean(trait_competent, na.rm = T),
+            trustworthy = mean(trait_trustworthy, na.rm = T),
+            financiallyNeedy = mean(trait_financiallyNeedy, na.rm = T),
+            dominant = mean(trait_dominant, na.rm = T),
+            friendly = mean(trait_friendly, na.rm = T)) %>% 
+  pivot_wider(names_from = expression, values_from = c(response_i_mean, competence, trustworthy, financiallyNeedy, dominant, friendly)) %>% 
+  dplyr::mutate(responseRatio = response_i_mean_exci/response_i_mean_calm,
+         responseDiff = response_i_mean_exci - response_i_mean_calm,
+         competenceDiff = competence_exci - competence_calm,
+         trustworthyDiff = trustworthy_exci - trustworthy_calm,
+         financiallyNeedyDiff = financiallyNeedy_exci - financiallyNeedy_calm,
+         dominantDiff = dominant_exci - dominant_calm,
+         friendlyDiff = friendly_exci - friendly_calm)
+
+# prepare to merge with this dataset that contains other important vars 
+otherVars <- Data_noNeut %>% 
+  dplyr::select(pID, Culture, Gender, Age, FamSES2num, aHAP, aLAP, iHAP, iLAP) %>% 
+  distinct()
+
+mediationData <- left_join(otherVars, computeDiffs, by = "pID") # Add computed diff scores to otherVars
+```
+
+
+### Competence 
+```{r}
+# # step 1: x -> y
+# summary(lm(responseDiff ~ reputation + Gender + Age + FamSES2num, data = mediationData))
+# 
+# c# step 2: x -> m
+# summary(lm(competenceDiff ~ reputation + Gender + Age + FamSES2num, data = mediationData))
+# 
+# # step 3: x -> m
+# summary(lm(responseDiff ~ competenceDiff + reputation + Gender + Age + FamSES2num, data = mediationData))
+
+# step 1: x -> y 
+summary(lm(responseDiff ~ reputation, data = mediationData))
+
+# step 2: x -> m 
+summary(lm(competenceDiff ~ reputation, data = mediationData))
+
+# step 3: x -> m 
+summary(lm(responseDiff ~ competenceDiff + reputation, data = mediationData))
+
+# set up models
+model.M <- lm(competenceDiff ~ reputation, data = mediationData)
+model.Y <- lm(responseDiff ~ reputation + competenceDiff, data = mediationData)
+
+results <- mediation::mediate(model.M, model.Y, treat='reputation', mediator='competenceDiff', boot = TRUE, sims=1000, control.value="low", treat.value="high")
+summary(results)
+
+# for reporting mediator --> DV arrow
+summary(lm(responseDiff ~ competenceDiff, data = mediationData))
+```
+
