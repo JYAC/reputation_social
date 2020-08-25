@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Survey</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="jsPsych/jspsych.js"></script>
+        <script src='jsPsych/plugins/jspsych-fullscreen.js'></script>
+        <script src='jsPsych/plugins/jspsych-instructions.js'></script>
+        <script src='jsPsych/plugins/jspsych-html-keyboard-response.js'></script>
+        <script src='jsPsych/plugins/jspsych-image-keyboard-response.js'></script>
+        <script src='jsPsych/plugins/jspsych-survey-multi-choice.js'></script>
+        <script src='jsPsych/plugins/jspsych-survey-multi-select.js'></script>
+        <script src='jsPsych/plugins/jspsych-survey-likert.js'></script>
+        <script src='jsPsych/plugins/jspsych-call-function.js'></script>
+	<script src='jsPsych/plugins/jspsych-survey-text.js'></script>
+        <script src="faces.json" ></script>
+        <script src="prerep.json" ></script>
+        <script src="sections/utils.js" ></script>
+        <script src="sections/consent.js" ></script>
+        <script src="sections/instructions.js" ></script>
+        <script src="sections/task.js" ></script>
+        <link href="jsPsych/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <!--
+        <script src="jsPsych/plugins/jspsych-instructions.js"></script>
+        <script src="jsPsych/plugins/jspsych-xab-image.js"></script>
+        <script src="jsPsych/plugins/jspsych-image-slider-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-html-slider-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-image-keyboard-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jsPsych/plugins/jspsych-xab-html.js"></script>
+        <script src="jsPsych/plugins/jspsych-survey-text.js"></script>
+        <script src="mmturkey.js"></script> -->
+        <style>
+    	img {width: 400px;}
+        a:link{color:white;}
+        a:visited{color:white;}
+  	</style>
+    </head>
+    <body>
+
+    <p>Unfortunately, the survey's maximum capacity has already been reached due to popular demand, so we are now required to close this study for further participation. We apologize for the inconvenience and thank you for your understanding. </p>
+
+    </body>
+    <!-- <script>
+
+        /*style it they way I want it*/
+        $(document.body).css("background-color", "black");
+        $(document.body).css("color", "white");
+
+        /* Build Trial Timeline */
+
+    	var  timeline = [];
+        if(fullscreen){
+            timeline.push({
+                type: 'fullscreen',
+                fullscreen_mode: true
+            });
+        };
+
+	var participantID = Math.random().toString(36).slice(2)
+	var showID = {
+		type: 'instructions',
+		allow_keys: false,
+		show_clickable_nav: true,
+		allow_backward: false,
+		pages: ['<p>請寫下你的受試者編號，你會被要求在問卷的一開始填入此編號，為了支付報酬這是很重要的。</p> <p style="font-size: 24px; color: red"><b>'+participantID+'</b></p>']
+	} 
+        timeline.push(consent);
+        timeline.push(instru1);
+        timeline.push(showID);
+        timeline.push(instru2);
+//        timeline = timeline.concat(wait(num_dots, wait_duration, "We are verifying the number of players in the game.</h4><h4>Please wait"));
+        timeline.push(select_avatar);
+        timeline = timeline.concat(wait(num_dots, wait_duration, "你正被分配中，請稍後"));
+        timeline.push(instru3a);
+	timeline.push(resize);
+	// TODO: change to n_trial
+
+        for (var i = 0; i < n_pre_trial; i++) {
+        	if(i==n_trial/4){
+                timeline.push(onefourth);
+            }
+            t = pre_face_stimulus.pop(0);
+            timeline = timeline.concat(getPreTrial(t));
+        }
+
+        timeline.push(instru3b);
+        
+        for(var i = 0; i < n_trial; i++){
+            if(i==n_trial/2){
+                timeline.push(half);
+            }
+            if(i==(n_trial*3/4)){
+                timeline.push(threefourths);
+            }
+            t = face_stimulus.pop(0);
+            timeline = timeline.concat(getTrial(t));
+        }
+        timeline = timeline.concat(wait(num_dots, wait_duration, "請稍候"));
+	
+	/* Trait ratings */
+        //timeline.push(instru4)
+        //for(var i = 0; i < n_trait_rating; i++){
+        //    t = face_stimulus.pop(0);
+        //    timeline = timeline.concat(showTraitQ(t))
+        //}
+
+	/* Save Function */
+	function saveData(data){
+		$.ajax({
+			type: "POST",
+			cache: false,
+			url: "https://web.stanford.edu/~jcachia/cgi-bin/Taiwan/write_data.php",
+			data: {data: data, pid:participantID},
+			dataType: 'html',
+		});
+	};
+
+	var email = {
+		type: 'survey-text',
+		questions: [{prompt: '請輸入你的<span style="color:red;">大學學校信箱</span>:'}],
+        button_label: "繼續",
+	};
+
+	timeline.push(email)
+
+	timeline.push({type:'call-function', func: function(data){saveData(jsPsych.data.get().json());}});
+
+	// instru5 is the last element
+        timeline.push(instru5);
+
+        /* INIT Experiment */
+    	callback_complete = jsPsych.init({
+    		timeline: timeline,
+    	//	on_finish: function(data){
+		//jsPsych.data.displayData();
+    	//	}
+    	});
+        jsPsych.pluginAPI.preloadImages(image_array, callback_complete);
+    </script> -->
+</html>
+
+
+
