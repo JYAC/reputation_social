@@ -1,0 +1,721 @@
+faces = [{
+      "half": 1,
+      "reputation": "low",
+      "exact value": 21,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM25new_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 80,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW1_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 47,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM10_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 21,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM6_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 48,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW22_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 84,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW10_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM16_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 77,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW2new_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 49,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM14_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 20,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW7_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 25,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW13_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 83,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM21_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 82,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM12_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 20,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW4_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 85,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM8_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 22,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW4_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 53,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW6_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 81,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM4_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 82,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW16_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 21,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM17_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW14_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 49,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM17_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 17,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM4_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 45,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW1_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 48,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW19_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 17,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM8c_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 52,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM1_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 79,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW21_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 23,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM3_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 19,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW20_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 76,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM24_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 48,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW28_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "mod",
+      "exact value": 51,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "male",
+      "identity": "a",
+      "image": "AAM7_hap1x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 85,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "male",
+      "identity": "a",
+      "image": "EAM9_neux.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "low",
+      "exact value": 16,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "female",
+      "identity": "a",
+      "image": "EAW5_hap5x.jpg"
+   },
+   {
+      "half": 1,
+      "reputation": "high",
+      "exact value": 78,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "female",
+      "identity": "a",
+      "image": "AAW3_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW7_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM6_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 23,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW8_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 81,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM10_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 16,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW8_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 76,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW13_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 84,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM11_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 24,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM5_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 49,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW8d_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 78,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM16_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 49,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM11_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 21,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW10_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 83,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW9_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM7_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 77,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW25_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 52,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM27_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 53,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW8c_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 21,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM19_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 51,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW11_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW6_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 18,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM21_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 77,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW17_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 80,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM22_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 19,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW17_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 48,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM26_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 20,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW21_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 47,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW24_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 77,
+      "emotion": "exci",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM13_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 76,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW9_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "mod",
+      "exact value": 54,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM9_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 16,
+      "emotion": "calm",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM3_hap1x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 80,
+      "emotion": "neut",
+      "race": "white",
+      "sex": "female",
+      "identity": "b",
+      "image": "EAW18_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 20,
+      "emotion": "exci",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM14_hap5x.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 15,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "female",
+      "identity": "b",
+      "image": "AAW16_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "high",
+      "exact value": 81,
+      "emotion": "neut",
+      "race": "asian",
+      "sex": "male",
+      "identity": "b",
+      "image": "AAM2_neux.jpg"
+   },
+   {
+      "half": 2,
+      "reputation": "low",
+      "exact value": 18,
+      "emotion": "calm",
+      "race": "white",
+      "sex": "male",
+      "identity": "b",
+      "image": "EAM12_hap1x.jpg"
+   }
+]

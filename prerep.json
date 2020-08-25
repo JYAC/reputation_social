@@ -1,0 +1,74 @@
+prerep = [
+  {
+    "emotion": "exci",
+    "race": "asian",
+    "sex": "male",
+    "image": "AAM28_hap5x.jpg"
+  },
+  {
+    "emotion": "calm",
+    "race": "white",
+    "sex": "female",
+    "image": "EAW14_hap1x.jpg"
+  },
+  {
+    "emotion": "neut",
+    "race": "asian",
+    "sex": "male",
+    "image": "AAM20_neux.jpg"
+  },
+  {
+    "emotion": "exci",
+    "race": "white",
+    "sex": "male",
+    "image": "EAM25_hap5x.jpg"
+  },
+  {
+    "emotion": "exci",
+    "race": "white",
+    "sex": "female",
+    "image": "EAW23_hap5x.jpg"
+  },
+  {
+    "emotion": "neut",
+    "race": "asian",
+    "sex": "female",
+    "image": "AAW2_neux.jpg"
+  },
+  {
+    "emotion": "calm",
+    "race": "white",
+    "sex": "male",
+    "image": "EAM31_hap1x.jpg"
+  },
+  {
+    "emotion": "exci",
+    "race": "asian",
+    "sex": "female",
+    "image": "AAW31_hap5x.jpg"
+  },
+  {
+    "emotion": "neut",
+    "race": "white",
+    "sex": "male",
+    "image": "EAM31_neux.jpg"
+  },
+  {
+    "emotion": "calm",
+    "race": "asian",
+    "sex": "female",
+    "image": "AAW5_hap1x.jpg"
+  },
+  {
+    "emotion": "neut",
+    "race": "white",
+    "sex": "female",
+    "image": "EAW20_neux.jpg"
+  },
+  {
+    "emotion": "calm",
+    "race": "asian",
+    "sex": "male",
+    "image": "AAM15_hap1x.jpg"
+  }
+]
