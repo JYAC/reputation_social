@@ -46,10 +46,10 @@ theme_set(
 
 ```{r}
 # read in part 1 data
-Part1_norep <- read.csv("../../Data/Part1/one_shot_trust_long_norep.csv")
-Part1 <- read.csv("../../Data/Part1/one_shot_trust_long.csv")
+Part1_norep <- read.csv("../../Data/US/Part1/one_shot_trust_long_norep.csv")
+Part1 <- read.csv("../../Data/US/Part1/one_shot_trust_long.csv")
 # read in part 2 data
-Part2 <- read.csv("../../Data/Part2/reputation_study_part2.csv")
+Part2 <- read.csv("../../Data/US/Part2/reputation_study_part2.csv")
 
 #Make sure full survey filled out
 Part2 <- Part2 %>% 
@@ -136,13 +136,13 @@ Data <- type.convert(Data, as.is = TRUE)
 
 ```{r}
 # read in part 1 data
-Part1_norep_t <- read.csv("../../../Taiwan/Data/Part1/one_shot_trust_long_norep.csv")
-Part1_t <- read.csv("../../../Taiwan/Data/Part1/one_shot_trust_long.csv")
+Part1_norep_t <- read.csv("../../Data/Taiwan/Part1/one_shot_trust_long_norep.csv")
+Part1_t <- read.csv("../../Data/Taiwan/Part1/one_shot_trust_long.csv")
 
 # read in part 2 data
 # Part2_t <- fetch_survey(surveyID = "SV_5tO8DW4nWx5bGPb", force_request = TRUE, convert = FALSE, label = FALSE)
-# write.csv(Part2_t, "../../../Taiwan/Data/Part2/reputation_study_part2_t.csv")
-Part2_t <- read.csv("../../../Taiwan/Data/Part2/reputation_study_part2_t.csv")
+# write.csv(Part2_t, "../../Data/Taiwan/Part2/reputation_study_part2_t.csv")
+Part2_t <- read.csv("../../Data/Taiwan/Part2/reputation_study_part2_t.csv")
 
 #Make sure full survey filled out
 Part2_t <- Part2_t %>% 
@@ -285,17 +285,17 @@ Data_norep <- Data_norep %>%
                                      "75-100K",
                                      ">100K")),
          expression_norep = factor(expression_norep,
-                             levels = c("neut", "calm", "exci")),
+                                   levels = c("neut", "calm", "exci")),
          race_norep = factor(race_norep,
-                       levels = c("asian", "white")),
+                             levels = c("asian", "white")),
          sex_norep = factor(sex_norep,
-                      levels = c("female", "male"))) %>% 
+                            levels = c("female", "male"))) %>% 
   dplyr::rename(race_norep = race_norep)
 
 Data_norep <- Data_norep %>% 
   dplyr::ungroup() %>% 
   dplyr::group_by(pID) %>%
-  # calculate SD in amount given
+  # calculate SD in amount transferred
   dplyr::mutate(responseSD = sd(response_norep, na.rm = T)) %>%
   # if SD = 0, make responseNoVar equal to 1 else 0
   dplyr::mutate(responseNoVar = ifelse(responseSD == 0, 1, 0)) #if SD for all trials was 0, make the responseNoVar equal to 1. If not 0, then make it equal to 0 
@@ -356,7 +356,7 @@ Data <- Data %>%
 Data <- Data %>% 
   dplyr::ungroup() %>% 
   dplyr::group_by(pID) %>%
-  # calculate SD in amount given
+  # calculate SD in amount transferred
   dplyr::mutate(responseSD = sd(response, na.rm = T)) %>%
   # if SD = 0, make responseNoVar equal to 1 else 0
   dplyr::mutate(responseNoVar = ifelse(responseSD == 0, 1, 0)) #if SD for all trials was 0, make the responseNoVar equal to 1. If not 0, then make it equal to 0 
@@ -387,9 +387,9 @@ Data <- Data %>%
   dplyr::group_by(pID) %>% 
   dplyr::rowwise() %>% 
   dplyr::mutate(aHAP = mean(c(a1_1, a1_7, a1_9, a2_9), na.rm = T), 
-         aLAP = mean(c(a1_6, a3_3, a3_9, a3_10), na.rm = T),
-         iHAP = mean(c(i1_1, i1_7, i1_9, i2_9), na.rm = T), 
-         iLAP = mean(c(i1_6, i3_3, i3_9, i3_10), na.rm = T))
+                aLAP = mean(c(a1_6, a3_3, a3_9, a3_10), na.rm = T),
+                iHAP = mean(c(i1_1, i1_7, i1_9, i2_9), na.rm = T), 
+                iLAP = mean(c(i1_6, i3_3, i3_9, i3_10), na.rm = T))
 
 #Ipsatize actual and ideal (separately)
 Ipsatized_Actual <- Data %>% 
@@ -398,16 +398,16 @@ Ipsatized_Actual <- Data %>%
   dplyr::mutate(aSD = apply(.[,2:ncol(.)], na.rm = T, 1, sd)) %>% #Compute rowwise SD
   dplyr::mutate(aMean = rowMeans(dplyr::select(., contains("_")), na.rm = T)) %>% #Compute rowwise means
   dplyr::mutate(a_enthus_i = ifelse(aSD != 0, (a1_1 - aMean)/aSD, 0), #Ipsatize enthusiastic
-         a_excited_i = ifelse(aSD != 0, (a1_7 - aMean)/aSD, 0), #Ipsatize excited (ifelse function is there to ensure that if they input same answer for all affect and get SD = 0. their ipsatized value will be 0 rather than NA)
-         a_elated_i = ifelse(aSD != 0, (a1_9 - aMean)/aSD, 0), #Ipsatize elated
-         a_euphoric_i = ifelse(aSD != 0, (a2_9 - aMean)/aSD, 0), #Ipsatize euphoric
-         a_relaxed_i = ifelse(aSD != 0, (a1_6 - aMean)/aSD, 0), #Ipsatize relaxed
-         a_calm_i = ifelse(aSD != 0, (a3_3 - aMean)/aSD, 0), #Ipsatize calm
-         a_peaceful_i = ifelse(aSD != 0, (a3_9 - aMean)/aSD, 0), #Ipsatize peaceful
-         a_serene_i = ifelse(aSD != 0, (a3_10 - aMean)/aSD, 0)) %>% #Ipsatize serene
+                a_excited_i = ifelse(aSD != 0, (a1_7 - aMean)/aSD, 0), #Ipsatize excited (ifelse function is there to ensure that if they input same answer for all affect and get SD = 0. their ipsatized value will be 0 rather than NA)
+                a_elated_i = ifelse(aSD != 0, (a1_9 - aMean)/aSD, 0), #Ipsatize elated
+                a_euphoric_i = ifelse(aSD != 0, (a2_9 - aMean)/aSD, 0), #Ipsatize euphoric
+                a_relaxed_i = ifelse(aSD != 0, (a1_6 - aMean)/aSD, 0), #Ipsatize relaxed
+                a_calm_i = ifelse(aSD != 0, (a3_3 - aMean)/aSD, 0), #Ipsatize calm
+                a_peaceful_i = ifelse(aSD != 0, (a3_9 - aMean)/aSD, 0), #Ipsatize peaceful
+                a_serene_i = ifelse(aSD != 0, (a3_10 - aMean)/aSD, 0)) %>% #Ipsatize serene
   rowwise %>% 
   dplyr::mutate(aHAP_i = mean(c(a_enthus_i, a_excited_i, a_elated_i, a_euphoric_i), na.rm = T), #Compute ipsatized HAP
-         aLAP_i = mean(c(a_relaxed_i, a_calm_i, a_peaceful_i, a_serene_i), na.rm = T)) %>% #Compute ipsatized LAP
+                aLAP_i = mean(c(a_relaxed_i, a_calm_i, a_peaceful_i, a_serene_i), na.rm = T)) %>% #Compute ipsatized LAP
   dplyr::select(pID, aHAP_i, aLAP_i) %>% #Keep only the ipsatized HAP and LAP scores
   dplyr::distinct()
 
@@ -417,16 +417,16 @@ Ipsatized_Ideal <- Data %>%
   dplyr::mutate(iSD = apply(.[,2:ncol(.)], na.rm = T, 1, sd)) %>% #Compute rowwise SD
   dplyr::mutate(iMean = rowMeans(dplyr::select(., contains("_")), na.rm = T)) %>% #Compute rowwise means
   dplyr::mutate(i_enthus_i = ifelse(iSD != 0, (i1_1 - iMean)/iSD, 0), #Ipsatize enthusiastic (ifelse function is there to ensure that if they input same answer for all affect and get SD = 0. their ipsatized value will be 0 rather than NA)
-         i_excited_i = ifelse(iSD != 0, (i1_7 - iMean)/iSD, 0), #Ipsatize excited
-         i_elated_i = ifelse(iSD != 0, (i1_9 - iMean)/iSD, 0), #Ipsatize elated
-         i_euphoric_i = ifelse(iSD != 0, (i2_9 - iMean)/iSD, 0), #Ipsatize euphoric
-         i_relaxed_i = ifelse(iSD != 0, (i1_6 - iMean)/iSD, 0), #Ipsatize relaxed
-         i_calm_i = ifelse(iSD != 0, (i3_3 - iMean)/iSD, 0), #Ipsatize calm
-         i_peaceful_i = ifelse(iSD != 0, (i3_9 - iMean)/iSD, 0), #Ipsatize peaceful
-         i_serene_i = ifelse(iSD != 0, (i3_10 - iMean)/iSD, 0)) %>% #Ipsatize serene
+                i_excited_i = ifelse(iSD != 0, (i1_7 - iMean)/iSD, 0), #Ipsatize excited
+                i_elated_i = ifelse(iSD != 0, (i1_9 - iMean)/iSD, 0), #Ipsatize elated
+                i_euphoric_i = ifelse(iSD != 0, (i2_9 - iMean)/iSD, 0), #Ipsatize euphoric
+                i_relaxed_i = ifelse(iSD != 0, (i1_6 - iMean)/iSD, 0), #Ipsatize relaxed
+                i_calm_i = ifelse(iSD != 0, (i3_3 - iMean)/iSD, 0), #Ipsatize calm
+                i_peaceful_i = ifelse(iSD != 0, (i3_9 - iMean)/iSD, 0), #Ipsatize peaceful
+                i_serene_i = ifelse(iSD != 0, (i3_10 - iMean)/iSD, 0)) %>% #Ipsatize serene
   rowwise %>% 
   dplyr::mutate(iHAP_i = mean(c(i_enthus_i, i_excited_i, i_elated_i, i_euphoric_i), na.rm = T), #Compute ipsatized HAP
-         iLAP_i = mean(c(i_relaxed_i, i_calm_i, i_peaceful_i, i_serene_i), na.rm = T)) %>% #Compute ipsatized LAP
+                iLAP_i = mean(c(i_relaxed_i, i_calm_i, i_peaceful_i, i_serene_i), na.rm = T)) %>% #Compute ipsatized LAP
   dplyr::select(pID, iHAP_i, iLAP_i) %>%  #Keep only the ipsatized HAP and LAP scores
   dplyr::distinct()
 
@@ -499,10 +499,10 @@ Data <- left_join(by = c("pID", "trial_num"), trialNum, traitRatingsLong)
 # rename traits so they have helpful titles 
 Data <- Data %>% 
   dplyr::rename(trait_competent = "1", 
-         trait_trustworthy = "2",
-         trait_financiallyNeedy = "3",
-         trait_dominant = "4",
-         trait_friendly = "5")
+                trait_trustworthy = "2",
+                trait_financiallyNeedy = "3",
+                trait_dominant = "4",
+                trait_friendly = "5")
 ```
 
 
@@ -571,8 +571,8 @@ Ipsatized_Response <- Data_norep %>%
   ungroup() %>%
   group_by(pID) %>%
   dplyr::mutate(response_mean_norep = mean(response_norep, na.rm = T),
-         response_SD_norep = sd(response_norep, na.rm = T),
-         response_i_norep = (response_norep - response_mean_norep)/response_SD_norep) %>%
+                response_SD_norep = sd(response_norep, na.rm = T),
+                response_i_norep = (response_norep - response_mean_norep)/response_SD_norep) %>%
   dplyr::select(pID, trial_num_norep, response_i_norep) #Keep only pID and ipsatized response scores
 
 Data_norep <- left_join(Data_norep, Ipsatized_Response, by = c("pID", "trial_num_norep")) #Add ipsatized response scores to original dataframe
@@ -583,8 +583,8 @@ Ipsatized_Response <- Data %>%
   ungroup() %>%
   group_by(pID) %>%
   dplyr::mutate(response_mean = mean(response, na.rm = T),
-         response_SD = sd(response, na.rm = T),
-         response_i = (response - response_mean)/response_SD) %>%
+                response_SD = sd(response, na.rm = T),
+                response_i = (response - response_mean)/response_SD) %>%
   dplyr::select(pID, trial_num, response_i) #Keep only pID and ipsatized response scores
 
 Data <- left_join(Data, Ipsatized_Response, by = c("pID", "trial_num")) #Add ipsatized response scores to original dataframe
@@ -625,7 +625,7 @@ Demographics <- Data %>%
 age <- Demographics %>%
   dplyr::group_by(Culture) %>%
   dplyr::summarize(Age_Mean = mean(Age, na.rm = T),
-            Age_SD = sd(Age, na.rm = T))
+                   Age_SD = sd(Age, na.rm = T))
 pander(age)
 
 # t test
@@ -714,13 +714,13 @@ ggplot(Demographics, aes(x = FamSES2)) +
 iAVI <- Demographics %>% #ideal
   dplyr::group_by(Culture) %>%
   dplyr::summarize(iHAP_Mean = mean(iHAP, na.rm = T),
-            iHAP_SD = sd(iHAP, na.rm = T),
-            iLAP_Mean = mean(iLAP, na.rm = T),
-            iLAP_SD = sd(iLAP, na.rm = T),
-            iHAPi_Mean = mean(iHAP_i, na.rm = T),
-            iHAPi_SD = sd(iHAP_i, na.rm = T),
-            iLAPi_Mean = mean(iLAP_i, na.rm = T),
-            iLAPi_SD = sd(iLAP_i, na.rm = T))
+                   iHAP_SD = sd(iHAP, na.rm = T),
+                   iLAP_Mean = mean(iLAP, na.rm = T),
+                   iLAP_SD = sd(iLAP, na.rm = T),
+                   iHAPi_Mean = mean(iHAP_i, na.rm = T),
+                   iHAPi_SD = sd(iHAP_i, na.rm = T),
+                   iLAPi_Mean = mean(iLAP_i, na.rm = T),
+                   iLAPi_SD = sd(iLAP_i, na.rm = T))
 pander(iAVI)
 
 # AVI: tidy up dataframe so that iHAP, iLAP, iHAP_i, iLAP_i, aHAP and aLAP (which are currently individual columns) are now rows under IdealAffect, IpsatizedIdealAffect, and ActualAffect, respectively:
@@ -757,13 +757,13 @@ ggplot(TidyAVI, aes(x = IpsatizedIdealAffect, y = Valuation_i, fill = Culture)) 
 aAVI <- Demographics %>% #actual
   dplyr::group_by(Culture) %>%
   dplyr::summarize(aHAP_Mean = mean(aHAP, na.rm = T),
-            aHAP_SD = sd(aHAP, na.rm = T),
-            aLAP_Mean = mean(aLAP, na.rm = T),
-            aLAP_SD = sd(aLAP, na.rm = T),
-            aHAPi_Mean = mean(aHAP_i, na.rm = T),
-            aHAPi_SD = sd(aHAP_i, na.rm = T),
-            aLAPi_Mean = mean(aLAP_i, na.rm = T),
-            aLAPi_SD = sd(aLAP_i, na.rm = T))
+                   aHAP_SD = sd(aHAP, na.rm = T),
+                   aLAP_Mean = mean(aLAP, na.rm = T),
+                   aLAP_SD = sd(aLAP, na.rm = T),
+                   aHAPi_Mean = mean(aHAP_i, na.rm = T),
+                   aHAPi_SD = sd(aHAP_i, na.rm = T),
+                   aLAPi_Mean = mean(aLAP_i, na.rm = T),
+                   aLAPi_SD = sd(aLAP_i, na.rm = T))
 pander(aAVI)
 
 ggplot(TidyAVI, aes(x = ActualAffect, y = Reported, fill = Culture)) +
@@ -932,7 +932,7 @@ Power <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Power_Mean = mean(SchwartzValues_1, na.rm = T),
-            Power_SD = sd(SchwartzValues_1, na.rm = T))
+                   Power_SD = sd(SchwartzValues_1, na.rm = T))
 pander(Power)
 
 #Achievement
@@ -941,7 +941,7 @@ Achievement <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Achievement_Mean = mean(SchwartzValues_2, na.rm = T),
-            Achievement_SD = sd(SchwartzValues_2, na.rm = T))
+                   Achievement_SD = sd(SchwartzValues_2, na.rm = T))
 pander(Achievement)
 
 #Hedonism
@@ -950,7 +950,7 @@ Hedonism <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Hedonism_Mean = mean(SchwartzValues_3, na.rm = T),
-            Hedonism_SD = sd(SchwartzValues_3, na.rm = T))
+                   Hedonism_SD = sd(SchwartzValues_3, na.rm = T))
 pander(Hedonism)
 
 #Stimulation
@@ -959,7 +959,7 @@ Stimulation <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Stimulation_Mean = mean(SchwartzValues_4, na.rm = T),
-            Stimulation_SD = sd(SchwartzValues_4, na.rm = T))
+                   Stimulation_SD = sd(SchwartzValues_4, na.rm = T))
 pander(Stimulation)
 
 #Self-direction
@@ -968,7 +968,7 @@ Self_direction <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Self_direction_Mean = mean(SchwartzValues_5, na.rm = T),
-            Self_direction_SD = sd(SchwartzValues_5, na.rm = T))
+                   Self_direction_SD = sd(SchwartzValues_5, na.rm = T))
 pander(Self_direction)
 
 #Universalism
@@ -977,7 +977,7 @@ Universalism <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Universalism_Mean = mean(SchwartzValues_6, na.rm = T),
-            Universalism_SD = sd(SchwartzValues_6, na.rm = T))
+                   Universalism_SD = sd(SchwartzValues_6, na.rm = T))
 pander(Universalism)
 
 #Benevolence
@@ -986,7 +986,7 @@ Benevolence <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Benevolence_Mean = mean(SchwartzValues_7, na.rm = T),
-            Benevolence_SD = sd(SchwartzValues_7, na.rm = T))
+                   Benevolence_SD = sd(SchwartzValues_7, na.rm = T))
 pander(Benevolence)
 
 #Tradition
@@ -995,7 +995,7 @@ Tradition <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Tradition_Mean = mean(SchwartzValues_8, na.rm = T),
-            Tradition_SD = sd(SchwartzValues_8, na.rm = T))
+                   Tradition_SD = sd(SchwartzValues_8, na.rm = T))
 pander(Tradition)
 
 #Conformity
@@ -1004,7 +1004,7 @@ Conformity <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Conformity_Mean = mean(SchwartzValues_9, na.rm = T),
-            Conformity_SD = sd(SchwartzValues_9, na.rm = T))
+                   Conformity_SD = sd(SchwartzValues_9, na.rm = T))
 pander(Conformity)
 
 #Security
@@ -1013,7 +1013,7 @@ Security <- Demographics %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture) %>% 
   dplyr::summarize(Security_Mean = mean(SchwartzValues_10, na.rm = T),
-            Security_SD = sd(SchwartzValues_10, na.rm = T))
+                   Security_SD = sd(SchwartzValues_10, na.rm = T))
 pander(Security)
 
 # Visualize
@@ -1090,7 +1090,7 @@ summary(modelSecurity)
 trust <- Demographics %>%
   group_by(Culture) %>% 
   dplyr::summarize(trust_mean = mean(GeneralTrust, na.rm = T),
-            trust_sd = sd(GeneralTrust, na.rm = T))
+                   trust_sd = sd(GeneralTrust, na.rm = T))
 pander(trust)
 
 model1 <- lm(data = Demographics, GeneralTrust ~ Culture)
@@ -1111,7 +1111,7 @@ ggplot(Demographics, aes(x = GeneralTrust)) +
 selfImage <- Demographics %>%
   group_by(Culture) %>% 
   dplyr::summarize(selfImage_mean = mean(SelfImage, na.rm = T),
-            selfImage_sd = sd(SelfImage, na.rm = T))
+                   selfImage_sd = sd(SelfImage, na.rm = T))
 pander(selfImage)
 
 model1 <- lm(data = Demographics, SelfImage ~ Culture)
@@ -1129,7 +1129,7 @@ ggplot(Demographics, aes(x = SelfImage)) +
 otherImage <- Demographics %>%
   group_by(Culture) %>% 
   dplyr::summarize(otherImage_mean = mean(OtherImage, na.rm = T),
-            otherImage_sd = sd(OtherImage, na.rm = T))
+                   otherImage_sd = sd(OtherImage, na.rm = T))
 pander(otherImage)
 
 model1 <- lm(data = Demographics, OtherImage ~ Culture)
@@ -1147,7 +1147,7 @@ ggplot(Demographics, aes(x = OtherImage)) +
 repStability <- Demographics %>%
   group_by(Culture) %>% 
   dplyr::summarize(repStability_mean = mean(RepStability, na.rm = T),
-            repStability_sd = sd(RepStability, na.rm = T))
+                   repStability_sd = sd(RepStability, na.rm = T))
 pander(repStability)
 
 model1 <- lm(data = Demographics, RepStability ~ Culture)
@@ -1269,43 +1269,47 @@ Actual LAP (Taiwan): `r round(aLAP_alpha$alpha, 2)`
 
 # Visualizations for Data_norep
 
-## Offers by Culture
+Based on [this](https://www.niklasjohannes.com/post/calculating-and-visualizing-error-bars-for-within-subjects-designs/) post, decided to use summarySEwithin function (in Rmisc package) to compute SE's for reporting and plotting.
+
+This method is based on [Morey, 2008](http://pcl.missouri.edu/sites/default/files/morey.2008.pdf). 
+
+## Transfers by Culture
 
 ```{r, echo=FALSE, message=FALSE}
 # extract variables relevant for analyses
 Data_subset <- Data_norep %>% 
   dplyr::select(pID, trial_num_norep, sex_norep, race_norep, expression_norep, response_norep, response_i_norep, responseConvert_norep, responsePPP_norep, Age, Gender, contains("AP"), responseNoVar, FamSES2, Culture) %>% 
   distinct()
-  
-# compute mean offer for each participant including neutral
+
+# compute mean transfer for each participant including neutral
 Data_pID <- Data_subset %>%
-  group_by(Culture, pID) %>%
+  group_by(pID, Culture) %>%
   dplyr::summarise(give = mean(response_norep, na.rm = T),
-            give_i = mean(response_i_norep, na.rm = T),
-            give_C = mean(responseConvert_norep, na.rm = T),
-            give_PPP = mean(responsePPP_norep, na.rm = T))
+                   give_i = mean(response_i_norep, na.rm = T),
+                   give_C = mean(responseConvert_norep, na.rm = T),
+                   give_PPP = mean(responsePPP_norep, na.rm = T))
 
 # create table
 Data_pID %>%
   group_by(Culture) %>% 
   dplyr::summarise(give_Mean = mean(give, na.rm = T),
-            give_SD = sd(give, na.rm = T),
-            give_i_Mean = mean(give_i, na.rm = T),
-            give_i_SD = sd(give_i, na.rm = T),
-            give_C_Mean = mean(give_C, na.rm = T),
-            give_C_SD = sd(give_C, na.rm = T),
-            give_PPP_Mean = mean(give_PPP, na.rm = T),
-            give_PPP_SD = sd(give_PPP, na.rm = T)) %>% 
+                   give_SD = sd(give, na.rm = T),
+                   give_i_Mean = mean(give_i, na.rm = T),
+                   give_i_SD = sd(give_i, na.rm = T),
+                   give_C_Mean = mean(give_C, na.rm = T),
+                   give_C_SD = sd(give_C, na.rm = T),
+                   give_PPP_Mean = mean(give_PPP, na.rm = T),
+                   give_PPP_SD = sd(give_PPP, na.rm = T)) %>% 
   pander()
 
-# histogram of ipsatized offers
+# histogram of ipsatized transfers
 ggplot(Data_pID, aes(x = give_i)) +
   facet_grid(Culture~.) +
   geom_histogram() +
-  xlab("Amount given (ipsatized)") + 
+  xlab("Amount Transferred (ipsatized)") + 
   ylab("Frequency") +
   ggthemes::theme_few() +
-  ggtitle("Histogram of Ipsatized Offers") +
+  ggtitle("Histogram of Ipsatized Transfers") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1314,7 +1318,7 @@ ggplot(Data_pID, aes(x = give_i)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Culture and Expression
+## Transfers by Culture and Expression
 
 ```{r, echo=FALSE}
 # summarize across recipient expression and reputation
@@ -1323,21 +1327,21 @@ summary <- Data_subset %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, Culture, expression_norep) %>%
   dplyr::summarise(n = n(),
-            mean = mean(responseConvert_norep, na.rm = T),
-            mean_i = mean(response_i_norep, na.rm = T),
-            stdv = sd(responseConvert_norep),
-            stdv_i = sd(response_i_norep),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n)) %>%
+                   mean = mean(responseConvert_norep, na.rm = T),
+                   mean_i = mean(response_i_norep, na.rm = T),
+                   stdv = sd(responseConvert_norep),
+                   stdv_i = sd(response_i_norep),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression_norep) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T)) 
 
 # create table: Culture and Expression
 summary %>% pander()
@@ -1347,7 +1351,7 @@ ggplot(summary, aes(x = Culture, y = mean_i, fill = expression_norep)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
   xlab("Culture") +
-  ylab("Ipsatized Offer ($)") +
+  ylab("Ipsatized Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1371,43 +1375,47 @@ ggplot(summary, aes(x = Culture, y = mean, fill = expression_norep)) +
 
 # Visualizations for Data (with rep)
 
-## Offers by Culture
+Based on [this](https://www.niklasjohannes.com/post/calculating-and-visualizing-error-bars-for-within-subjects-designs/) post, decided to use summarySEwithin function (in Rmisc package) to compute SE's for reporting and plotting.
+
+This method is based on [Morey, 2008](http://pcl.missouri.edu/sites/default/files/morey.2008.pdf). 
+
+## Transfers by Culture
 
 ```{r, echo=FALSE, message=FALSE}
 # extract variables relevant for analyses
 Data_subset <- Data %>% 
   dplyr::select(pID, trial_num, sex, target_race, identity, expression, reputation, exact_value, rt, response, response_i, responseConvert, responsePPP, Age, Gender, contains("AP"), responseNoVar, FamSES2, Culture) %>% 
   distinct()
-  
-# compute mean offer for each participant including neutral
+
+# compute mean transfer for each participant including neutral
 Data_pID <- Data_subset %>%
-  group_by(Culture, pID) %>%
+  group_by(pID, Culture) %>%
   dplyr::summarise(give = mean(response, na.rm = T),
-            give_i = mean(response_i, na.rm = T),
-            give_C = mean(responseConvert, na.rm = T),
-            give_PPP = mean(responsePPP, na.rm = T))
+                   give_i = mean(response_i, na.rm = T),
+                   give_C = mean(responseConvert, na.rm = T),
+                   give_PPP = mean(responsePPP, na.rm = T))
 
 # create table
 Data_pID %>%
   group_by(Culture) %>% 
   dplyr::summarise(give_Mean = mean(give, na.rm = T),
-            give_SD = sd(give, na.rm = T),
-            give_i_Mean = mean(give_i, na.rm = T),
-            give_i_SD = sd(give_i, na.rm = T),
-            give_C_Mean = mean(give_C, na.rm = T),
-            give_C_SD = sd(give_C, na.rm = T),
-            give_PPP_Mean = mean(give_PPP, na.rm = T),
-            give_PPP_SD = sd(give_PPP, na.rm = T)) %>% 
+                   give_SD = sd(give, na.rm = T),
+                   give_i_Mean = mean(give_i, na.rm = T),
+                   give_i_SD = sd(give_i, na.rm = T),
+                   give_C_Mean = mean(give_C, na.rm = T),
+                   give_C_SD = sd(give_C, na.rm = T),
+                   give_PPP_Mean = mean(give_PPP, na.rm = T),
+                   give_PPP_SD = sd(give_PPP, na.rm = T)) %>% 
   pander()
 
-# histogram of ipsatized offers
+# histogram of ipsatized transfers
 ggplot(Data_pID, aes(x = give_i)) +
   facet_grid(Culture~.) +
   geom_histogram() +
-  xlab("Amount given (ipsatized)") + 
+  xlab("Amount Transferred (ipsatized)") + 
   ylab("Frequency") +
   ggthemes::theme_few() +
-  ggtitle("Histogram of Ipsatized Offers") +
+  ggtitle("Histogram of Ipsatized Transfers") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1415,14 +1423,14 @@ ggplot(Data_pID, aes(x = give_i)) +
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5))
 
-# histogram of simply converted offers
+# histogram of simply converted transfers
 ggplot(Data_pID, aes(x = give_C)) +
   facet_grid(Culture~.) +
   geom_histogram() +
-  xlab("Amount given in USD") + 
+  xlab("Amount Transferred in USD") + 
   ylab("Frequency") +
   ggthemes::theme_few() +
-  ggtitle("Histogram of Offers in USD") +
+  ggtitle("Histogram of Transfers in USD") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1430,14 +1438,14 @@ ggplot(Data_pID, aes(x = give_C)) +
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5))
 
-# histogram of PPP converted offers
+# histogram of PPP converted transfers
 ggplot(Data_pID, aes(x = give_PPP)) +
   facet_grid(Culture~.) +
   geom_histogram() +
-  xlab("Amount given in USD (PPP Conversion)") + 
+  xlab("Amount Transferred in USD (PPP Conversion)") + 
   ylab("Frequency") +
   ggthemes::theme_few() +
-  ggtitle("Histogram of Offers in USD (PPP Conversion)") +
+  ggtitle("Histogram of Transfers in USD (PPP Conversion)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1446,38 +1454,38 @@ ggplot(Data_pID, aes(x = give_PPP)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Reputation only
+## Transfers by Reputation only
 
 ```{r, echo=FALSE}
 # summarize across recipient reputation
 summary <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(reputation) %>%
+  dplyr::group_by(pID, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(responseConvert, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(responseConvert),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n)) %>%
+                   mean = mean(responseConvert, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(responseConvert),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T)) 
 
 # create table: Reputation alone
 summary %>%
   dplyr::group_by(reputation) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
   pander()
 
 # ipsatized transfer (figure for paper)
@@ -1486,7 +1494,7 @@ ggplot(summary, aes(x = reputation, y = mean_i)) +
   geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
   geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   xlab("Target Reputation") +
-  ylab("Ipsatized Transfers ($)") +
+  ylab("Ipsatized Transfers") +
   coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
   scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
   theme(axis.title.x = element_text(face = "bold", size = 16),
@@ -1517,38 +1525,38 @@ ggplot(summary, aes(x = reputation, y = mean)) +
 #ggsave("raw_reputation.jpg", width = 6, height = 4)
 ```
 
-## Offers by Expression only
+## Transfers by Expression only
 
 ```{r, echo=FALSE}
 # summarize across recipient expression
 summary <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(expression) %>%
+  dplyr::group_by(pID, expression) %>%
   dplyr::summarise(n = n(),
-            mean = mean(responseConvert, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(responseConvert),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n)) %>%
+                   mean = mean(responseConvert, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(responseConvert),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(expression) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T)) 
 
 # create table: Reputation alone
 summary %>%
   dplyr::group_by(expression) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
   pander()
 
 # ipsatized transfer (figure for paper)
@@ -1557,7 +1565,7 @@ ggplot(summary, aes(x = expression, y = mean_i)) +
   geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
   geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   xlab("Target Expression") +
-  ylab("Ipsatized Transfers ($)") +
+  ylab("Ipsatized Transfers") +
   coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
   scale_x_discrete(labels=c("neut" = "Neutral", "calm" = "Calm", "exci" = "Excited")) + 
   theme(axis.title.x = element_text(face = "bold", size = 16),
@@ -1583,38 +1591,38 @@ ggplot(summary, aes(x = expression, y = mean)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Culture and Reputation
+## Transfers by Culture and Reputation
 
 ```{r, echo=FALSE}
 # summarize across recipient reputation
 summary <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(Culture, reputation) %>%
+  dplyr::group_by(pID, Culture, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(responseConvert, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(responseConvert),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n)) %>%
+                   mean = mean(responseConvert, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(responseConvert),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T)) 
 
 # create table: Culture and Reputation 
 summary %>%
   dplyr::group_by(Culture, reputation) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
   pander()
 
 # ipsatized transfer (figure for paper)
@@ -1624,7 +1632,7 @@ ggplot(summary, aes(x = reputation, y = mean_i, fill = Culture)) +
   geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#d99594", "#94b3d7")) +
   xlab("Target Reputation") +
-  ylab("Ipsatized Transfers ($)") +
+  ylab("Ipsatized Transfers") +
   coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
   scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
   theme(axis.title.x = element_text(face = "bold", size = 16),
@@ -1656,47 +1664,47 @@ ggplot(summary, aes(x = reputation, y = mean, fill = Culture)) +
 #ggsave("raw_reputation.jpg", width = 10, height = 6)
 ```
 
-## Offers by Expression and Reputation
+## Transfers by Expression and Reputation
 
 ```{r, echo=FALSE}
 # summarize across recipient expression and reputation
 summary <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(expression, reputation) %>%
+  dplyr::group_by(pID, expression, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(expression, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T)) 
 
 # create table: Expression alone
 summary %>%
   dplyr::group_by(expression) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
   pander()
 
 # create table: Reputation alone
 summary %>%
   dplyr::group_by(reputation) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
   pander()
 
 # create table: Both Expression and Reputation
@@ -1709,7 +1717,7 @@ ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1718,7 +1726,7 @@ ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Culture and Expression 
+## Transfers by Culture and Expression 
 
 ```{r, echo=FALSE}
 # summarize across recipient culture and expression
@@ -1726,23 +1734,23 @@ summary <- Data_subset %>%
   # dplyr::filter(expression != "neut") %>% 
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(Culture, expression) %>%
+  dplyr::group_by(pID, Culture, expression) %>%
   dplyr::summarise(n = n(),
-            mean = mean(responseConvert, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(responseConvert),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n)) %>%
+                   mean = mean(responseConvert, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(responseConvert),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T)) 
 
 # create table: Both Expression and Reputation 
 summary %>% 
@@ -1755,7 +1763,7 @@ ggplot(summary, aes(x = Culture, y = mean_i, fill = expression)) +
   geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) +
   geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   xlab("Participant Culture") +
-  ylab("Ipsatized Transfers ($)") +
+  ylab("Ipsatized Transfers") +
   scale_x_discrete(labels = c("European American" = "European American", "East Asian" = "Taiwanese")) +
   scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
   theme(axis.title.x = element_text(face = "bold", size = 16),
@@ -1782,65 +1790,65 @@ ggplot(summary, aes(x = Culture, y = mean, fill = expression)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Culture, Expression and Reputation
+## Transfers by Culture, Expression and Reputation
 
 ```{r, echo=FALSE}
 # summarize across recipient expression and reputation
 summary <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(Culture, pID, expression, reputation) %>%
+  dplyr::group_by(pID, Culture, expression, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            mean_conv = mean(responseConvert, na.rm =T),
-            mean_ppp = mean(responsePPP, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            stdv_conv = sd(responseConvert),
-            stdv_ppp = sd(responsePPP),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i/sqrt(n),
-            sem_conv = stdv_conv/sqrt(n),
-            sem_ppp = stdv_ppp/sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   mean_conv = mean(responseConvert, na.rm =T),
+                   mean_ppp = mean(responsePPP, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   stdv_conv = sd(responseConvert),
+                   stdv_ppp = sd(responsePPP),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i/sqrt(n),
+                   sem_conv = stdv_conv/sqrt(n),
+                   sem_ppp = stdv_ppp/sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            mean_conv = mean(mean_conv, na.rm = T),
-            mean_ppp = mean(mean_ppp, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            stdv_conv = mean(stdv_conv, na.rm = T),
-            stdv_ppp = mean(stdv_ppp, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm. = T),
-            sem_conv = mean(sem_conv, na.rm = T),
-            sem_ppp = mean(sem_ppp, na.rm = T)) 
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   mean_conv = mean(mean_conv, na.rm = T),
+                   mean_ppp = mean(mean_ppp, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   stdv_conv = mean(stdv_conv, na.rm = T),
+                   stdv_ppp = mean(stdv_ppp, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm. = T),
+                   sem_conv = mean(sem_conv, na.rm = T),
+                   sem_ppp = mean(sem_ppp, na.rm = T)) 
 
 # create table: Expression alone
 summary %>%
   dplyr::group_by(Culture, expression) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T),
-            give_conv_Mean = mean(mean_conv, na.rm = T),
-            give_conv_SD = sd(mean_conv, na.rm = T),
-            give_ppp_Mean = mean(mean_ppp, na.rm = T),
-            give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T),
+                   give_conv_Mean = mean(mean_conv, na.rm = T),
+                   give_conv_SD = sd(mean_conv, na.rm = T),
+                   give_ppp_Mean = mean(mean_ppp, na.rm = T),
+                   give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
   pander()
 
 # create table: Reputation alone
 summary %>%
   dplyr::group_by(Culture, reputation) %>% 
   dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-            give_SD = sd(mean, na.rm = T),
-            give_i_Mean = mean(mean_i, na.rm = T),
-            give_i_SD = sd(mean_i, na.rm = T),
-            give_ppp_Mean = mean(mean_ppp, na.rm = T),
-            give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
+                   give_SD = sd(mean, na.rm = T),
+                   give_i_Mean = mean(mean_i, na.rm = T),
+                   give_i_SD = sd(mean_i, na.rm = T),
+                   give_ppp_Mean = mean(mean_ppp, na.rm = T),
+                   give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
   pander()
 
 # create table: Both Expression and Reputation
@@ -1854,7 +1862,7 @@ ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1868,7 +1876,7 @@ ggplot(summary, aes(x = reputation, y = mean_conv, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_conv-sem_conv), ymax = (mean_conv+sem_conv))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer (Simple Conversion $)") +
+  ylab("Mean Transfer (Simple Conversion $)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1882,7 +1890,7 @@ ggplot(summary, aes(x = reputation, y = mean_ppp, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_ppp-sem_ppp), ymax = (mean_ppp+sem_ppp))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer (PPP Converted $)") +
+  ylab("Mean Transfer (PPP Converted $)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1891,30 +1899,30 @@ ggplot(summary, aes(x = reputation, y = mean_ppp, fill = expression)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Culture, Expression, Reputation and *Race*
+## Transfers by Culture, Expression, Reputation and *Race*
 
 ```{r, echo=FALSE}
 # summarize across recipient expression, reputation, race
 summary_race <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(Culture, pID, expression, reputation, target_race) %>%
+  dplyr::group_by(pID, Culture, expression, reputation, target_race) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression, reputation, target_race) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_race %>%
@@ -1927,7 +1935,7 @@ ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1936,30 +1944,30 @@ ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Culture, Expression, Reputation and *Sex*
+## Transfers by Culture, Expression, Reputation and *Sex*
 
 ```{r, echo=FALSE}
 # summarize across recipient expression, reputation, sex
 summary_sex <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(Culture, pID, expression, reputation, sex) %>%
+  dplyr::group_by(pID, Culture, expression, reputation, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression, reputation, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_sex %>%
@@ -1972,7 +1980,7 @@ ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1982,30 +1990,30 @@ ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
 ```
 
 
-## Offers by Culture, Expression, Reputation, *Race and Sex*
+## Transfers by Culture, Expression, Reputation, *Race and Sex*
 
 ```{r, echo=FALSE}
 # summarize across recipient expression, reputation, race, and sex
 summary_race_sex <- Data_subset %>%
   # calculate for each subject
   dplyr::ungroup() %>%
-  dplyr::group_by(Culture, pID, expression, reputation, target_race, sex) %>%
+  dplyr::group_by(pID, Culture, expression, reputation, target_race, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression, reputation, target_race, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_race_sex %>%
@@ -2018,7 +2026,7 @@ ggplot(summary_race_sex, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -2027,7 +2035,7 @@ ggplot(summary_race_sex, aes(x = reputation, y = mean_i, fill = expression)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-## Offers by Expression, Reputation, and target Race/target Sex (No Culture)
+## Transfers by Expression, Reputation, and target Race/target Sex (No Culture)
 
 ```{r}
 # Just expression, reputation, target race:
@@ -2038,21 +2046,21 @@ summary_race <- Data_subset %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, expression, reputation, target_race) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(expression, reputation, target_race) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_race %>%
@@ -2065,7 +2073,7 @@ ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -2083,21 +2091,21 @@ summary_sex <- Data_subset %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, expression, reputation, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(expression, reputation, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_sex %>%
@@ -2110,7 +2118,7 @@ ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -2130,21 +2138,21 @@ summary_gender <- Data_subset %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, Gender, reputation) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Gender, reputation) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_gender %>%
@@ -2156,7 +2164,7 @@ ggplot(summary_gender, aes(x = reputation, y = mean_i, fill = Gender)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#94b3d7","#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -2175,21 +2183,21 @@ summary_gender2 <- Data_subset %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, Culture, Gender, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, Gender, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_gender2 %>%
@@ -2202,7 +2210,7 @@ ggplot(summary_gender2, aes(x = Gender, y = mean_i, fill = sex)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#94b3d7","#d99594")) +
   xlab("Participant Gender") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -2221,21 +2229,21 @@ summary_gender3 <- Data_subset %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, Culture, reputation, Gender) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response, na.rm = T),
-            mean_i = mean(response_i, na.rm = T),
-            stdv = sd(response),
-            stdv_i = sd(response_i),
-            sem = stdv / sqrt(n),
-            sem_i = stdv_i / sqrt(n)) %>%
+                   mean = mean(response, na.rm = T),
+                   mean_i = mean(response_i, na.rm = T),
+                   stdv = sd(response),
+                   stdv_i = sd(response_i),
+                   sem = stdv / sqrt(n),
+                   sem_i = stdv_i / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, reputation, Gender) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            mean_i = mean(mean_i, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            stdv_i = mean(stdv_i, na.rm = T),
-            sem = mean(sem, na.rm = T),
-            sem_i = mean(sem_i, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   mean_i = mean(mean_i, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   stdv_i = mean(stdv_i, na.rm = T),
+                   sem = mean(sem, na.rm = T),
+                   sem_i = mean(sem_i, na.rm = T))
 
 # create table
 summary_gender3 %>%
@@ -2248,7 +2256,7 @@ ggplot(summary_gender3, aes(x = reputation, y = mean_i, fill = Gender)) +
   geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
   scale_fill_manual(values=c("#94b3d7","#d99594")) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") +
+  ylab("Mean Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -2273,7 +2281,7 @@ contrasts(Data_norep$Culture) <- cbind(AsianVsEur = c(-1, 1))
 
 ```{r}
 # save Data as csv to combine with version 1 of reputation study
-write.csv(Data, file = "../../Studies 1 2 Combined/Study2Data.csv")
+write.csv(Data, file = "../../../Studies 1 2 Combined/Study2Data.csv")
 ```
 
 ```{r}
@@ -2295,13 +2303,13 @@ contrasts(Data_norep$expression_norep)
 # EXPRESSION 
 # expression: calm vs. excited
 contrasts(Data_norep$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
-                                      orthogonal = c(2, -1, -1))
+                                            orthogonal = c(2, -1, -1))
 # expression: neutral vs. calm
 contrasts(Data_norep$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-                                      orthogonal = c(-1, -1, 2))
+                                            orthogonal = c(-1, -1, 2))
 # expression: excited vs. neutral
 contrasts(Data_norep$expression)   <- cbind(ExciVsNeut = c(-1, 0, 1),
-                                      orthogonal = c(-1, 2, -1))
+                                            orthogonal = c(-1, 2, -1))
 
 contrasts(Data_norep$Culture) <- cbind(AsiVsEur = c(-1,1))
 
@@ -2326,7 +2334,7 @@ summary(model_simpleConv)
 
 # expression: calm vs. excited
 contrasts(Data_norep$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
-                                      orthogonal = c(2, -1, -1))
+                                            orthogonal = c(2, -1, -1))
 # # expression: neutral vs. calm
 # contrasts(Data_norep$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
 #                                       orthogonal = c(-1, -1, 2))
@@ -2553,10 +2561,10 @@ Data_EastAsian <- Data %>%
 # European Americans: linear trends for reputation, effect coding expression
 
 contrasts(Data_EuropeanAmericans$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-                                      CalmVsExci = c(0, -1, 1))
+                                                        CalmVsExci = c(0, -1, 1))
 
 contrasts(Data_EuropeanAmericans$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
-                                      reput_quad = c(-1, 2, -1))
+                                                        reput_quad = c(-1, 2, -1))
 
 EuropeanAmerican1 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EuropeanAmerican1)
@@ -2564,10 +2572,10 @@ summary(EuropeanAmerican1)
 # European Americans: effect coding both expression and reputation
 
 contrasts(Data_EuropeanAmericans$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-                                      CalmVsExci = c(0, -1, 1))
+                                                        CalmVsExci = c(0, -1, 1))
 
 contrasts(Data_EuropeanAmericans$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
-                                      ModVsHigh = c(0, -1, 1))
+                                                        ModVsHigh = c(0, -1, 1))
 
 EuropeanAmerican2 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EuropeanAmerican2)
@@ -2575,10 +2583,10 @@ summary(EuropeanAmerican2)
 # East Asians: linear trends for reputation, effect coding expression
 
 contrasts(Data_EastAsian$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-                                      CalmVsExci = c(0, -1, 1))
+                                                CalmVsExci = c(0, -1, 1))
 
 contrasts(Data_EastAsian$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
-                                      reput_quad = c(-1, 2, -1))
+                                                reput_quad = c(-1, 2, -1))
 
 EastAsian1 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EastAsian1)
@@ -2586,10 +2594,10 @@ summary(EastAsian1)
 # East Asians: effect coding both expression and reputation
 
 contrasts(Data_EastAsian$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-                                      CalmVsExci = c(0, -1, 1))
+                                                CalmVsExci = c(0, -1, 1))
 
 contrasts(Data_EastAsian$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
-                                      ModVsHigh = c(0, -1, 1))
+                                                ModVsHigh = c(0, -1, 1))
 
 EastAsian2 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EastAsian2)
@@ -2629,11 +2637,11 @@ summary(model_highrep)
 
 ## Individual differences in ideal affect
 ```{r}
-#Model 1: Player 2 expression, reputation, and ideal HAP as predictors for amount given by participants, controlling for actual HAP 
+#Model 1: Player 2 expression, reputation, and ideal HAP as predictors for amount transferred by participants, controlling for actual HAP 
 model1 <- lmer(data = Data, response_i ~ 1 + expression * reputation * scale(iHAP, scale = F) + scale(aHAP, scale = F) + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(model1)
 
-#Model 2: Player 2 expression, reputation, and ideal LAP as predictors for amount given by participants, controlling for actual LAP 
+#Model 2: Player 2 expression, reputation, and ideal LAP as predictors for amount transferred by participants, controlling for actual LAP 
 model2 <- lmer(data = Data, response_i ~ 1 + expression * reputation * scale(iLAP, scale = F) + scale(aLAP, scale = F) + + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(model2)
 
@@ -2650,7 +2658,7 @@ Data %>%
   scale_fill_manual(values=c("#a3c1ad", "#73a2e9", "#a22127")) + #Set correct ribbon colors
   scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
   xlab("Participant ideal HAP") +
-  ylab("Amount Given (ipsatized)") 
+  ylab("Amount Transferred (ipsatized)") 
 
 #iHAP without reputation facet grid
 Data %>% 
@@ -2661,7 +2669,7 @@ Data %>%
   scale_fill_manual(values=c("#a3c1ad", "#73a2e9", "#a22127")) + #Set correct ribbon colors
   scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
   xlab("Participant ideal HAP") +
-  ylab("Amount Given (ipsatized)") 
+  ylab("Amount Transferred (ipsatized)") 
 
 #iLAP
 Data %>% 
@@ -2673,8 +2681,8 @@ Data %>%
   scale_fill_manual(values=c("#a3c1ad", "#73a2e9", "#a22127")) + #Set correct ribbon colors
   scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
   xlab("Participant ideal LAP") +
-  ylab("Amount Given (ipsatized)") 
-  #ylim(c(-.5,.5))
+  ylab("Amount Transferred (ipsatized)") 
+#ylim(c(-.5,.5))
 ```
 
 ## Look at effects of target race and target sex
@@ -2726,15 +2734,15 @@ summary <- Data %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, expression, reputation, Gender, target_race, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response_i, na.rm = T),
-            stdv = sd(response_i),
-            sem = stdv / sqrt(n)) %>%
+                   mean = mean(response_i, na.rm = T),
+                   stdv = sd(response_i),
+                   sem = stdv / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(expression, reputation, Gender, target_race, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            sem = mean(sem, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   sem = mean(sem, na.rm = T))
 
 genderSummary <- summary %>%
   filter(expression != "neut") %>%
@@ -2746,7 +2754,7 @@ ggplot(genderSummary, aes(x = reputation, y = mean, fill = expression)) +
   scale_fill_manual(values=c("#94b3d7", "#d99594")) +
   facet_grid(~ Gender * target_race * sex) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") 
+  ylab("Mean Transfer ($)") 
 
 # # males only
 # # full model
@@ -2818,7 +2826,7 @@ ggplot(Data, aes(x = exact_value, y = trait_trustworthy, color = Culture)) +
   geom_smooth(method = "loess") +
   scale_color_manual(values=c("#94B3D7", "#D99594")) +
   xlab("Reputation")
-  
+
 ggplot(Data, aes(x = exact_value, y = trait_financiallyNeedy, color = Culture)) +
   geom_jitter(alpha = .2, height = .5, width = 5) +
   geom_smooth(method = "loess") +
@@ -2850,7 +2858,7 @@ ggplot(Data, aes(x = expression, y = trait_trustworthy, fill = Culture)) +
   stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
   coord_cartesian(ylim = c(1, 7)) +
   scale_fill_manual(values=c("#94B3D7", "#D99594")) 
-  
+
 ggplot(Data, aes(x = expression, y = trait_financiallyNeedy, fill = Culture)) +
   geom_bar(position="dodge", stat = "summary", fun = "mean") +
   stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
@@ -2934,15 +2942,15 @@ summary <- Data %>%
   dplyr::ungroup() %>%
   dplyr::group_by(Culture, pID, expression, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(trait_trustworthy, na.rm = T),
-            stdv = sd(trait_trustworthy, na.rm = T),
-            sem = stdv / sqrt(n)) %>%
+                   mean = mean(trait_trustworthy, na.rm = T),
+                   stdv = sd(trait_trustworthy, na.rm = T),
+                   sem = stdv / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(Culture, expression, reputation) %>%
   dplyr::summarise(n = n(),
-            mean = mean(mean, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            sem = mean(sem, na.rm = T)) 
+                   mean = mean(mean, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   sem = mean(sem, na.rm = T)) 
 
 # create table: Both Expression and Reputation
 summary %>% 
@@ -3002,7 +3010,7 @@ print(fit, digits=2, cutoff=.3, sort=TRUE)
 # linear trends for reputation
 
 contrasts(Data_noNeut$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
-                                      reput_quad = c(-1, 2, -1))
+                                             reput_quad = c(-1, 2, -1))
 
 model_ipsatized <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
 summary(model_ipsatized)
@@ -3010,7 +3018,7 @@ summary(model_ipsatized)
 # effect coding for reputation
 
 contrasts(Data_noNeut$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
-                                      ModVsHigh = c(0, -1, 1))
+                                             ModVsHigh = c(0, -1, 1))
 
 model_ipsatized <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(model_ipsatized)
@@ -3044,7 +3052,7 @@ Data_EastAsian <- Data_noNeut %>%
 # European Americans: linear trends for reputation
 
 contrasts(Data_EuropeanAmericans$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
-                                      reput_quad = c(-1, 2, -1))
+                                                        reput_quad = c(-1, 2, -1))
 
 EuropeanAmerican1 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EuropeanAmerican1)
@@ -3052,7 +3060,7 @@ summary(EuropeanAmerican1)
 # European Americans: effect coding for reputation
 
 contrasts(Data_EuropeanAmericans$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
-                                      ModVsHigh = c(0, -1, 1))
+                                                        ModVsHigh = c(0, -1, 1))
 
 EuropeanAmerican2 <- lmer(data = Data_EuropeanAmericans, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EuropeanAmerican2)
@@ -3060,7 +3068,7 @@ summary(EuropeanAmerican2)
 # East Asians: linear trends for reputation
 
 contrasts(Data_EastAsian$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
-                                      reput_quad = c(-1, 2, -1))
+                                                reput_quad = c(-1, 2, -1))
 
 EastAsian1 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EastAsian1)
@@ -3068,7 +3076,7 @@ summary(EastAsian1)
 # East Asians: effect coding for reputation
 
 contrasts(Data_EastAsian$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
-                                      ModVsHigh = c(0, -1, 1))
+                                                ModVsHigh = c(0, -1, 1))
 
 EastAsian2 <- lmer(data = Data_EastAsian, response_i ~ 1 + reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(EastAsian2)
@@ -3103,11 +3111,11 @@ summary(model_highrep)
 
 ## Individual differences in ideal affect
 ```{r}
-#Model 1: Player 2 expression, reputation, and ideal HAP as predictors for amount given by participants, controlling for actual HAP 
+#Model 1: Player 2 expression, reputation, and ideal HAP as predictors for amount transferred by participants, controlling for actual HAP 
 model1 <- lmer(data = Data_noNeut, response_i ~ 1 + expression * reputation * scale(iHAP, scale = F) + scale(aHAP, scale = F) + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(model1)
 
-#Model 2: Player 2 expression, reputation, and ideal LAP as predictors for amount given by participants, controlling for actual LAP 
+#Model 2: Player 2 expression, reputation, and ideal LAP as predictors for amount transferred by participants, controlling for actual LAP 
 model2 <- lmer(data = Data_noNeut, response_i ~ 1 + expression * reputation * scale(iLAP, scale = F) + scale(aLAP, scale = F) + + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(model2)
 
@@ -3124,7 +3132,7 @@ Data_noNeut %>%
   scale_fill_manual(values=c("#73a2e9", "#a22127")) + #Set correct ribbon colors
   scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
   xlab("Participant ideal HAP") +
-  ylab("Amount Given (ipsatized)") 
+  ylab("Amount Transferred (ipsatized)") 
 
 #iHAP without reputation facet grid
 Data_noNeut %>% 
@@ -3135,7 +3143,7 @@ Data_noNeut %>%
   scale_fill_manual(values=c("#73a2e9", "#a22127")) + #Set correct ribbon colors
   scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
   xlab("Participant ideal HAP") +
-  ylab("Amount Given (ipsatized)") 
+  ylab("Amount Transferred (ipsatized)") 
 
 #iLAP
 Data_noNeut %>% 
@@ -3147,8 +3155,8 @@ Data_noNeut %>%
   scale_fill_manual(values=c("#73a2e9", "#a22127")) + #Set correct ribbon colors
   scale_color_manual(values = expr_colors) + #Set correct jitter (point) colors
   xlab("Participant ideal LAP") +
-  ylab("Amount Given (ipsatized)") 
-  #ylim(c(-.5,.5))
+  ylab("Amount Transferred (ipsatized)") 
+#ylim(c(-.5,.5))
 ```
 
 ## Look at effects of target race and target sex
@@ -3157,7 +3165,7 @@ Data_noNeut %>%
 # full model (too complicated):
 
 contrasts(Data_noNeut$reputation)   <- cbind(LowVsMod = c(1, -1, 0),
-                                      ModVsHigh = c(0, -1, 1))
+                                             ModVsHigh = c(0, -1, 1))
 
 # full: add reputation
 target_char <- lmer(data = Data_noNeut, response_i ~ 1 + Culture * reputation * expression * target_race * sex + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
@@ -3180,15 +3188,15 @@ summary <- Data_noNeut %>%
   dplyr::ungroup() %>%
   dplyr::group_by(pID, expression, reputation, Gender, target_race, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(response_i, na.rm = T),
-            stdv = sd(response_i),
-            sem = stdv / sqrt(n)) %>%
+                   mean = mean(response_i, na.rm = T),
+                   stdv = sd(response_i),
+                   sem = stdv / sqrt(n)) %>%
   # calculate across subjects
   dplyr::group_by(expression, reputation, Gender, target_race, sex) %>%
   dplyr::summarize(n = n(),
-            mean = mean(mean, na.rm = T),
-            stdv = mean(stdv, na.rm = T),
-            sem = mean(sem, na.rm = T))
+                   mean = mean(mean, na.rm = T),
+                   stdv = mean(stdv, na.rm = T),
+                   sem = mean(sem, na.rm = T))
 
 genderSummary <- summary %>%
   dplyr::filter(expression != "neut") %>%
@@ -3200,7 +3208,7 @@ ggplot(genderSummary, aes(x = reputation, y = mean, fill = expression)) +
   scale_fill_manual(values=c("#94b3d7", "#d99594")) +
   facet_grid(~ Gender * target_race * sex) +
   xlab("Target Reputation") +
-  ylab("Mean Offer ($)") 
+  ylab("Mean Transfer ($)") 
 
 # # males only
 # # full model
@@ -3220,7 +3228,7 @@ ggplot(genderSummary, aes(x = reputation, y = mean, fill = expression)) +
 ## Exploratory analysis: trait ratings 
 ```{r}
 contrasts(Data_noNeut$reputation)   <- cbind(reput_linear = c(-1, 0, 1),
-                                      reput_quad = c(-1, 2, -1))
+                                             reput_quad = c(-1, 2, -1))
 
 competent <- lmer(data = Data_noNeut, trait_competent ~ 1 + Culture * reputation * expression + Gender + Age + FamSES2num + (1|pID), REML=FALSE)
 summary(competent)
@@ -3267,7 +3275,7 @@ ggplot(Data_noNeut, aes(x = exact_value, y = trait_trustworthy, color = Culture)
   geom_smooth(method = "loess") +
   scale_color_manual(values=c("#94B3D7", "#D99594")) +
   xlab("Reputation")
-  
+
 ggplot(Data_noNeut, aes(x = exact_value, y = trait_financiallyNeedy, color = Culture)) +
   geom_jitter(alpha = .2, height = .5, width = 5) +
   geom_smooth(method = "loess") +
@@ -3305,7 +3313,7 @@ ggplot(Data_noNeut, aes(x = expression, y = trait_trustworthy, fill = Culture)) 
   stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
   coord_cartesian(ylim = c(1, 7)) +
   scale_fill_manual(values=c("#94B3D7", "#D99594")) 
-  
+
 ggplot(Data_noNeut, aes(x = expression, y = trait_financiallyNeedy, fill = Culture)) +
   geom_bar(position="dodge", stat = "summary", fun.y = "mean") +
   stat_summary(geom = "errorbar", fun.data = mean_se, position=position_dodge(.9), width = 0.2) +
@@ -3399,7 +3407,7 @@ First, compute two difference scores by:
 
 (1) subtracting participants’ ratings of trustworthiness of calm recipients from those of excited recipients, collapsing across recipient reputation, race and sex
 
-(2) subtracting participants’ offers to calm recipients from those to excited recipients, collapsing across recipient reputation, race and sex
+(2) subtracting participants’ transfers to calm recipients from those to excited recipients, collapsing across recipient reputation, race and sex
 
 For reporting results: https://towardsdatascience.com/doing-and-reporting-your-first-mediation-analysis-in-r-2fe423b92171
 
@@ -3412,19 +3420,19 @@ computeDiffs <- Data_noNeut %>%
   dplyr::select(contains("trait_"), pID, expression, response_i) %>% 
   dplyr::group_by(pID, expression) %>% 
   dplyr::summarise(response_i_mean = mean(response_i, na.rm = T),
-            competence = mean(trait_competent, na.rm = T),
-            trustworthy = mean(trait_trustworthy, na.rm = T),
-            financiallyNeedy = mean(trait_financiallyNeedy, na.rm = T),
-            dominant = mean(trait_dominant, na.rm = T),
-            friendly = mean(trait_friendly, na.rm = T)) %>% 
+                   competence = mean(trait_competent, na.rm = T),
+                   trustworthy = mean(trait_trustworthy, na.rm = T),
+                   financiallyNeedy = mean(trait_financiallyNeedy, na.rm = T),
+                   dominant = mean(trait_dominant, na.rm = T),
+                   friendly = mean(trait_friendly, na.rm = T)) %>% 
   pivot_wider(names_from = expression, values_from = c(response_i_mean, competence, trustworthy, financiallyNeedy, dominant, friendly)) %>% 
   dplyr::mutate(responseRatio = response_i_mean_exci/response_i_mean_calm,
-         responseDiff = response_i_mean_exci - response_i_mean_calm,
-         competenceDiff = competence_exci - competence_calm,
-         trustworthyDiff = trustworthy_exci - trustworthy_calm,
-         financiallyNeedyDiff = financiallyNeedy_exci - financiallyNeedy_calm,
-         dominantDiff = dominant_exci - dominant_calm,
-         friendlyDiff = friendly_exci - friendly_calm)
+                responseDiff = response_i_mean_exci - response_i_mean_calm,
+                competenceDiff = competence_exci - competence_calm,
+                trustworthyDiff = trustworthy_exci - trustworthy_calm,
+                financiallyNeedyDiff = financiallyNeedy_exci - financiallyNeedy_calm,
+                dominantDiff = dominant_exci - dominant_calm,
+                friendlyDiff = friendly_exci - friendly_calm)
 
 # prepare to merge with this dataset that contains other important vars 
 otherVars <- Data_noNeut %>% 
@@ -3576,19 +3584,19 @@ computeDiffs <- Data_noNeut %>%
   dplyr::select(contains("trait_"), pID, expression, reputation, response_i) %>% 
   dplyr::group_by(pID, expression, reputation) %>% 
   dplyr::summarise(response_i_mean = mean(response_i, na.rm = T),
-            competence = mean(trait_competent, na.rm = T),
-            trustworthy = mean(trait_trustworthy, na.rm = T),
-            financiallyNeedy = mean(trait_financiallyNeedy, na.rm = T),
-            dominant = mean(trait_dominant, na.rm = T),
-            friendly = mean(trait_friendly, na.rm = T)) %>% 
+                   competence = mean(trait_competent, na.rm = T),
+                   trustworthy = mean(trait_trustworthy, na.rm = T),
+                   financiallyNeedy = mean(trait_financiallyNeedy, na.rm = T),
+                   dominant = mean(trait_dominant, na.rm = T),
+                   friendly = mean(trait_friendly, na.rm = T)) %>% 
   pivot_wider(names_from = expression, values_from = c(response_i_mean, competence, trustworthy, financiallyNeedy, dominant, friendly)) %>% 
   dplyr::mutate(responseRatio = response_i_mean_exci/response_i_mean_calm,
-         responseDiff = response_i_mean_exci - response_i_mean_calm,
-         competenceDiff = competence_exci - competence_calm,
-         trustworthyDiff = trustworthy_exci - trustworthy_calm,
-         financiallyNeedyDiff = financiallyNeedy_exci - financiallyNeedy_calm,
-         dominantDiff = dominant_exci - dominant_calm,
-         friendlyDiff = friendly_exci - friendly_calm)
+                responseDiff = response_i_mean_exci - response_i_mean_calm,
+                competenceDiff = competence_exci - competence_calm,
+                trustworthyDiff = trustworthy_exci - trustworthy_calm,
+                financiallyNeedyDiff = financiallyNeedy_exci - financiallyNeedy_calm,
+                dominantDiff = dominant_exci - dominant_calm,
+                friendlyDiff = friendly_exci - friendly_calm)
 
 # prepare to merge with this dataset that contains other important vars 
 otherVars <- Data_noNeut %>% 
