@@ -1316,42 +1316,15 @@ ggplot(Data_pID, aes(x = give_i)) +
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5))
-```
 
-## Transfers by Culture and Expression
-
-```{r, echo=FALSE}
-# summarize across recipient expression and reputation
-summary <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, expression_norep) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(responseConvert_norep, na.rm = T),
-                   mean_i = mean(response_i_norep, na.rm = T),
-                   stdv = sd(responseConvert_norep),
-                   stdv_i = sd(response_i_norep),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, expression_norep) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T)) 
-
-# create table: Culture and Expression
-summary %>% pander()
-
-ggplot(summary, aes(x = Culture, y = mean_i, fill = expression_norep)) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
-  xlab("Culture") +
-  ylab("Ipsatized Transfer ($)") +
+# histogram of simply converted transfers
+ggplot(Data_pID, aes(x = give_C)) +
+  facet_grid(Culture~.) +
+  geom_histogram() +
+  xlab("Amount Transferred in USD") + 
+  ylab("Frequency") +
+  ggthemes::theme_few() +
+  ggtitle("Histogram of Transfers in USD") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1359,9 +1332,120 @@ ggplot(summary, aes(x = Culture, y = mean_i, fill = expression_norep)) +
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5))
 
-ggplot(summary, aes(x = Culture, y = mean, fill = expression_norep)) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+# histogram of PPP converted transfers
+ggplot(Data_pID, aes(x = give_PPP)) +
+  facet_grid(Culture~.) +
+  geom_histogram() +
+  xlab("Amount Transferred in USD (PPP Conversion)") + 
+  ylab("Frequency") +
+  ggthemes::theme_few() +
+  ggtitle("Histogram of Transfers in USD (PPP Conversion)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Tranfers by Expression
+
+```{r}
+# ipsatized transfers
+
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i_norep", 
+                               withinvars=c("expression_norep"),
+                               idvar="pID", 
+                               na.rm=T)
+
+ips_summary %>% pander
+
+ggplot(ips_summary, aes(x=expression_norep, y=response_i_norep, fill=expression_norep)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i_norep-se, ymax=response_i_norep+se)) +
+  scale_x_discrete(name = "Target Expression", labels = c("Neutral", "Calm", "Excited")) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Expression") +
+  ylab("Ipsatized Transfer") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none") +
+  coord_cartesian(y=c(-0.35,0.3))
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert_norep", 
+                               withinvars=c("expression_norep"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=expression_norep, y=responseConvert_norep, fill=expression_norep)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert_norep-se, ymax=responseConvert_norep+se)) +
+  scale_x_discrete(name = "Target Expression", labels = c("Neutral", "Calm", "Excited")) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Expression") +
+  ylab("Ipsatized Transfer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none") 
+```
+
+## Transfers by Culture and Expression
+
+```{r, echo=FALSE}
+# ipsatized transfers
+
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i_norep", 
+                               withinvars=c("expression_norep"), 
+                               betweenvars=c("Culture"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+ips_summary %>% pander
+
+ggplot(ips_summary, aes(x=Culture, y=response_i_norep, fill=expression_norep)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i_norep-se, ymax=response_i_norep+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+  xlab("Culture") +
+  ylab("Ipsatized Transfer") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert_norep", 
+                               withinvars=c("expression_norep"), 
+                               betweenvars=c("Culture"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=Culture, y=responseConvert_norep, fill=expression_norep)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert_norep-se, ymax=responseConvert_norep+se)) +
   scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
   xlab("Culture") +
   ylab("Raw Transfer ($)") +
@@ -1370,7 +1454,9 @@ ggplot(summary, aes(x = Culture, y = mean, fill = expression_norep)) +
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
 ```
 
 # Visualizations for Data (with rep)
@@ -1457,812 +1543,697 @@ ggplot(Data_pID, aes(x = give_PPP)) +
 ## Transfers by Reputation only
 
 ```{r, echo=FALSE}
-# summarize across recipient reputation
-summary <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(responseConvert, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(responseConvert),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T)) 
+# ipsatized transfers
 
-# create table: Reputation alone
-summary %>%
-  dplyr::group_by(reputation) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("reputation"),
+                               idvar="pID", 
+                               na.rm=T)
 
-# ipsatized transfer (figure for paper)
+ips_summary %>% pander
 
-ggplot(summary, aes(x = reputation, y = mean_i)) +
-  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
-  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+ggplot(ips_summary, aes(x=reputation, y=response_i)) +
+  geom_bar(position=position_dodge(.55), fill="#D3D3D3", stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_x_discrete(name = "Target Reputation", labels = c("Low", "Moderate", "High")) +
   xlab("Target Reputation") +
-  ylab("Ipsatized Transfers") +
-  coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
-  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  ylab("Ipsatized Transfer") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5)) 
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("reputation"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert)) +
+  geom_bar(position=position_dodge(.55), fill="#D3D3D3", stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_x_discrete(name = "Target Reputation", labels = c("Low", "Moderate", "High")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5))
-
-#ggsave("ips_reputation.jpg", width = 6, height = 4)
-
-# raw transfer (figure for paper)
-
-ggplot(summary, aes(x = reputation, y = mean)) +
-  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
-  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
-  xlab("Target Reputation") +
-  ylab("Raw Transfers ($)") +
-  coord_cartesian(ylim = c(0, 10)) +
-  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
-  theme(axis.title.x = element_text(face = "bold", size = 16),
-        axis.text.x = element_text(size = 14),
-        strip.text.x = element_text(size = 14),
-        axis.title.y = element_text(face = "bold", size = 16),
-        axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
-
-#ggsave("raw_reputation.jpg", width = 6, height = 4)
 ```
 
 ## Transfers by Expression only
 
 ```{r, echo=FALSE}
-# summarize across recipient expression
-summary <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, expression) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(responseConvert, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(responseConvert),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(expression) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T)) 
+# ipsatized transfers
 
-# create table: Reputation alone
-summary %>%
-  dplyr::group_by(expression) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression"),
+                               idvar="pID", 
+                               na.rm=T)
 
-# ipsatized transfer (figure for paper)
+ips_summary %>% pander
 
-ggplot(summary, aes(x = expression, y = mean_i)) +
-  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
-  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+ggplot(ips_summary, aes(x=expression, y=response_i, fill=expression)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_x_discrete(name = "Target Expression", labels = c("Neutral", "Calm", "Excited")) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Expression") +
-  ylab("Ipsatized Transfers") +
-  coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
-  scale_x_discrete(labels=c("neut" = "Neutral", "calm" = "Calm", "exci" = "Excited")) + 
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none") +
+  coord_cartesian(y=c(-0.35,0.3))
 
-# raw transfer (figure for paper)
+# raw transfers
 
-ggplot(summary, aes(x = expression, y = mean)) +
-  geom_bar(stat = "identity", fill = "#D3D3D3", position=position_dodge(0.55), width=0.5) + # makes bars thinner
-  geom_errorbar(width = .25, position = position_dodge(.9), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=expression, y=responseConvert, fill=expression)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_x_discrete(name = "Target Expression", labels = c("Neutral", "Calm", "Excited")) +
+  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Target Expression") +
-  ylab("Raw Transfers ($)") +
-  scale_x_discrete(labels=c("neut" = "Neutral", "calm" = "Calm", "exci" = "Excited")) + 
+  ylab("Ipsatized Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none") 
 ```
 
 ## Transfers by Culture and Reputation
 
 ```{r, echo=FALSE}
-# summarize across recipient reputation
-summary <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(responseConvert, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(responseConvert),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T)) 
+# ipsatized transfers
 
-# create table: Culture and Reputation 
-summary %>%
-  dplyr::group_by(Culture, reputation) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("reputation"), 
+                               betweenvars=c("Culture"), 
+                               idvar="pID", 
+                               na.rm=T)
 
-# ipsatized transfer (figure for paper)
+ips_summary %>% pander
 
-ggplot(summary, aes(x = reputation, y = mean_i, fill = Culture)) +
-  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) + # makes bars thinner
-  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=Culture)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
   scale_fill_manual(values=c("#d99594", "#94b3d7")) +
   xlab("Target Reputation") +
-  ylab("Ipsatized Transfers") +
+  ylab("Ipsatized Transfer") +
   coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
-  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
 
-#ggsave("ips_reputation.jpg", width = 10, height = 6)
+# raw transfers
 
-# raw transfer (figure for paper)
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("reputation"), 
+                               betweenvars=c("Culture"), 
+                               idvar="pID", 
+                               na.rm=T)
 
-ggplot(summary, aes(x = reputation, y = mean, fill = Culture)) +
-  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) + # makes bars thinner
-  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean-sem), ymax = (mean+sem))) +
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=Culture)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
   scale_fill_manual(values=c("#d99594", "#94b3d7")) +
   xlab("Target Reputation") +
-  ylab("Raw Transfers ($)") +
-  coord_cartesian(ylim = c(0, 10)) +
-  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) + 
+  ylab("Raw Transfer ($)") +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
-
-#ggsave("raw_reputation.jpg", width = 10, height = 6)
-```
-
-## Transfers by Expression and Reputation
-
-```{r, echo=FALSE}
-# summarize across recipient expression and reputation
-summary <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, expression, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(expression, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T)) 
-
-# create table: Expression alone
-summary %>%
-  dplyr::group_by(expression) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
-  pander()
-
-# create table: Reputation alone
-summary %>%
-  dplyr::group_by(reputation) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T)) %>% 
-  pander()
-
-# create table: Both Expression and Reputation
-summary %>% 
-  dplyr::select(expression, reputation, mean, stdv, mean_i, stdv_i) %>% 
-  pander()
-
-ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
-  xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
-  theme(axis.title.x = element_text(face = "bold", size = 16),
-        axis.text.x = element_text(size = 14),
-        strip.text.x = element_text(size = 14),
-        axis.title.y = element_text(face = "bold", size = 16),
-        axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))
 ```
 
 ## Transfers by Culture and Expression 
 
 ```{r, echo=FALSE}
-# summarize across recipient culture and expression
-summary <- Data_subset %>%
-  # dplyr::filter(expression != "neut") %>% 
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, expression) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(responseConvert, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(responseConvert),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, expression) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T)) 
+# ipsatized transfers
 
-# create table: Both Expression and Reputation 
-summary %>% 
-  dplyr::select(Culture, expression, mean, stdv, mean_i, stdv_i) %>% 
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
 
-# Ipsatized (figure for paper)
+ips_summary %>% pander
 
-ggplot(summary, aes(x = Culture, y = mean_i, fill = expression)) +
-  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) +
-  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  xlab("Participant Culture") +
-  ylab("Ipsatized Transfers") +
-  scale_x_discrete(labels = c("European American" = "European American", "East Asian" = "Taiwanese")) +
-  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+ggplot(ips_summary, aes(x=Culture, y=response_i, fill=expression)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Culture") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
 
-# Raw (figure for paper)
+# raw transfers
 
-ggplot(summary, aes(x = Culture, y = mean, fill = expression)) +
-  geom_bar(stat = "identity", position=position_dodge(0.55), width=0.5) +
-  geom_errorbar(width = .25, position = position_dodge(0.55), aes(ymin = (mean-sem), ymax = (mean+sem))) +
-  xlab("Participant Culture") +
-  ylab("Raw Transfers ($)") +
-  scale_x_discrete(labels = c("European American" = "European American", "East Asian" = "Taiwanese")) +
-  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=Culture, y=responseConvert, fill=expression)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Culture") +
+  ylab("Raw Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
+```
+
+## Transfers by Expression and Reputation
+
+```{r, echo=FALSE}
+# ipsatized transfers
+
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("reputation", "expression"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+ips_summary %>% pander
+
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Ipsatized Transfer") +
+  coord_cartesian(ylim = c(-1, 1)) + # to allow space for a,b,c significance markers
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("reputation", "expression"), 
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfer ($)") +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Moderate", "high" = "High")) +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))
 ```
 
 ## Transfers by Culture, Expression and Reputation
 
 ```{r, echo=FALSE}
-# summarize across recipient expression and reputation
-summary <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, expression, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   mean_conv = mean(responseConvert, na.rm =T),
-                   mean_ppp = mean(responsePPP, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   stdv_conv = sd(responseConvert),
-                   stdv_ppp = sd(responsePPP),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i/sqrt(n),
-                   sem_conv = stdv_conv/sqrt(n),
-                   sem_ppp = stdv_ppp/sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, expression, reputation) %>%
-  dplyr::summarise(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   mean_conv = mean(mean_conv, na.rm = T),
-                   mean_ppp = mean(mean_ppp, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   stdv_conv = mean(stdv_conv, na.rm = T),
-                   stdv_ppp = mean(stdv_ppp, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm. = T),
-                   sem_conv = mean(sem_conv, na.rm = T),
-                   sem_ppp = mean(sem_ppp, na.rm = T)) 
+# ipsatized transfers
 
-# create table: Expression alone
-summary %>%
-  dplyr::group_by(Culture, expression) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T),
-                   give_conv_Mean = mean(mean_conv, na.rm = T),
-                   give_conv_SD = sd(mean_conv, na.rm = T),
-                   give_ppp_Mean = mean(mean_ppp, na.rm = T),
-                   give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
 
-# create table: Reputation alone
-summary %>%
-  dplyr::group_by(Culture, reputation) %>% 
-  dplyr::summarize(give_Mean = mean(mean, na.rm = T),
-                   give_SD = sd(mean, na.rm = T),
-                   give_i_Mean = mean(mean_i, na.rm = T),
-                   give_i_SD = sd(mean_i, na.rm = T),
-                   give_ppp_Mean = mean(mean_ppp, na.rm = T),
-                   give_ppp_SD = sd(mean_ppp, na.rm = T)) %>% 
-  pander()
+ips_summary %>% pander
 
-# create table: Both Expression and Reputation
-summary %>% 
-  dplyr::select(Culture, expression, reputation, mean, stdv, mean_i, stdv_i, mean_ppp, stdv_ppp) %>% 
-  pander()
-
-ggplot(summary, aes(x = reputation, y = mean_i, fill = expression)) +
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
   facet_grid(~Culture) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
 
-ggplot(summary, aes(x = reputation, y = mean_conv, fill = expression)) +
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
   facet_grid(~Culture) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_conv-sem_conv), ymax = (mean_conv+sem_conv))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer (Simple Conversion $)") +
+  ylab("Raw Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
-
-ggplot(summary, aes(x = reputation, y = mean_ppp, fill = expression)) +
-  facet_grid(~Culture) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_ppp-sem_ppp), ymax = (mean_ppp+sem_ppp))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
-  xlab("Target Reputation") +
-  ylab("Mean Transfer (PPP Converted $)") +
-  theme(axis.title.x = element_text(face = "bold", size = 16),
-        axis.text.x = element_text(size = 14),
-        strip.text.x = element_text(size = 14),
-        axis.title.y = element_text(face = "bold", size = 16),
-        axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
 ```
 
 ## Transfers by Culture, Expression, Reputation and *Race*
 
 ```{r, echo=FALSE}
-# summarize across recipient expression, reputation, race
-summary_race <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, expression, reputation, target_race) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, expression, reputation, target_race) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
+# ipsatized transfers
 
-# create table
-summary_race %>%
-  dplyr::select(Culture, expression, reputation, target_race, mean_i, stdv_i) %>%
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation", "target_race"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
 
-ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
-  facet_grid(Culture ~ target_race) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+ips_summary %>% pander
+
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
+  facet_grid(Culture~target_race) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation", "target_race"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
+  facet_grid(Culture~target_race) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
 ```
 
 ## Transfers by Culture, Expression, Reputation and *Sex*
 
 ```{r, echo=FALSE}
-# summarize across recipient expression, reputation, sex
-summary_sex <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, expression, reputation, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, expression, reputation, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
+# ipsatized transfers
 
-# create table
-summary_sex %>%
-  dplyr::select(Culture, expression, reputation, sex, mean_i, stdv_i) %>%
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation", "sex"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
 
-ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
-  facet_grid(Culture ~ sex) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+ips_summary %>% pander
+
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
+  facet_grid(Culture~sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation", "sex"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
+  facet_grid(Culture~sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
 ```
 
 
-## Transfers by Culture, Expression, Reputation, *Race and Sex*
+## Transfers by Culture, Expression, Reputation, Race *and* Sex
 
 ```{r, echo=FALSE}
-# summarize across recipient expression, reputation, race, and sex
-summary_race_sex <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, expression, reputation, target_race, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, expression, reputation, target_race, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
+# ipsatized transfers
 
-# create table
-summary_race_sex %>%
-  dplyr::select(Culture, expression, reputation, target_race, sex, mean_i, stdv_i) %>%
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation", "target_race", "sex"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
 
-ggplot(summary_race_sex, aes(x = reputation, y = mean_i, fill = expression)) +
+ips_summary %>% pander
+
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
   facet_grid(Culture ~ target_race + sex) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation", "target_race", "sex"),
+                               betweenvars=c("Culture"),
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
+  facet_grid(Culture ~ target_race + sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
 ```
 
 ## Transfers by Expression, Reputation, and target Race/target Sex (No Culture)
 
 ```{r}
-# Just expression, reputation, target race:
+# ipsatized transfers
 
-# summarize across recipient expression, reputation, and race
-summary_race <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, expression, reputation, target_race) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(expression, reputation, target_race) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation", "target_race", "sex"),
+                               idvar="pID", 
+                               na.rm=T)
 
-# create table
-summary_race %>%
-  dplyr::select(expression, reputation, target_race, mean_i, stdv_i) %>%
-  pander()
+ips_summary %>% pander
 
-ggplot(summary_race, aes(x = reputation, y = mean_i, fill = expression)) +
-  facet_grid(~target_race) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
+  facet_grid(target_race ~ sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
 
+# raw transfers
 
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation", "target_race", "sex"),
+                               idvar="pID", 
+                               na.rm=T)
 
-# Just expression, reputation, target sex:
+raw_summary %>% pander
 
-# summarize across recipient expression, reputation, and sex
-summary_sex <- Data_subset %>%
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, expression, reputation, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(expression, reputation, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
-
-# create table
-summary_sex %>%
-  dplyr::select(expression, reputation, sex, mean_i, stdv_i) %>%
-  pander()
-
-ggplot(summary_sex, aes(x = reputation, y = mean_i, fill = expression)) +
-  facet_grid(~sex) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#bdbdbd","#94b3d7", "#d99594")) +
+ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
+  facet_grid(target_race ~ sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Raw Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))
 ```
 
 ## Graphs for Gender Effects
 
 ```{r}
-# Just participant gender and reputation:
+# Culture, reputation, expression and participant gender:
 
-summary_gender <- Data_subset %>%
-  dplyr::filter(!is.na(Gender)) %>% 
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Gender, reputation) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Gender, reputation) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
+# ipsatized transfers
 
-# create table
-summary_gender %>%
-  dplyr::select(reputation, Gender, mean_i, stdv_i) %>%
-  pander()
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation"),
+                               betweenvars=c("Culture", "Gender"),
+                               idvar="pID", 
+                               na.rm=T)
 
-ggplot(summary_gender, aes(x = reputation, y = mean_i, fill = Gender)) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#94b3d7","#d99594")) +
+ips_summary %>% pander
+
+ggplot(subset(ips_summary, !is.na(Gender)), aes(x=reputation, y=response_i, fill=expression)) +
+  facet_grid(Culture ~ Gender) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Ipsatized Transfer") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
 
+# raw transfers
 
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation"),
+                               betweenvars=c("Culture", "Gender"),
+                               idvar="pID", 
+                               na.rm=T)
 
+raw_summary %>% pander
 
-# Just culture, participant gender, and target gender:
-
-summary_gender2 <- Data_subset %>%
-  dplyr::filter(!is.na(Gender)) %>% 
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, Gender, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, Gender, sex) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
-
-# create table
-summary_gender2 %>%
-  dplyr::select(Culture, Gender, sex, mean_i, stdv_i) %>%
-  pander()
-
-ggplot(summary_gender2, aes(x = Gender, y = mean_i, fill = sex)) +
-  facet_grid(~Culture) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#94b3d7","#d99594")) +
-  xlab("Participant Gender") +
-  ylab("Mean Transfer ($)") +
-  theme(axis.title.x = element_text(face = "bold", size = 16),
-        axis.text.x = element_text(size = 14),
-        strip.text.x = element_text(size = 14),
-        axis.title.y = element_text(face = "bold", size = 16),
-        axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
-
-
-
-
-# Just culture, reputation, and participant gender:
-
-summary_gender3 <- Data_subset %>%
-  dplyr::filter(!is.na(Gender)) %>% 
-  # calculate for each subject
-  dplyr::ungroup() %>%
-  dplyr::group_by(pID, Culture, reputation, Gender) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(response, na.rm = T),
-                   mean_i = mean(response_i, na.rm = T),
-                   stdv = sd(response),
-                   stdv_i = sd(response_i),
-                   sem = stdv / sqrt(n),
-                   sem_i = stdv_i / sqrt(n)) %>%
-  # calculate across subjects
-  dplyr::group_by(Culture, reputation, Gender) %>%
-  dplyr::summarize(n = n(),
-                   mean = mean(mean, na.rm = T),
-                   mean_i = mean(mean_i, na.rm = T),
-                   stdv = mean(stdv, na.rm = T),
-                   stdv_i = mean(stdv_i, na.rm = T),
-                   sem = mean(sem, na.rm = T),
-                   sem_i = mean(sem_i, na.rm = T))
-
-# create table
-summary_gender3 %>%
-  dplyr::select(Culture, reputation, Gender, mean_i, stdv_i) %>%
-  pander()
-
-ggplot(summary_gender3, aes(x = reputation, y = mean_i, fill = Gender)) +
-  facet_grid(~Culture) +
-  geom_bar(stat = "identity", position="dodge") +
-  geom_errorbar(width = .33, position = position_dodge(.9), aes(ymin = (mean_i-sem_i), ymax = (mean_i+sem_i))) +
-  scale_fill_manual(values=c("#94b3d7","#d99594")) +
+ggplot(subset(raw_summary, !is.na(Gender)), aes(x=reputation, y=responseConvert, fill=expression)) +
+  facet_grid(Culture ~ Gender) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
   xlab("Target Reputation") +
-  ylab("Mean Transfer ($)") +
+  ylab("Raw Transfer ($)") +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
+
+# Culture, reputation, expression, participant gender and *target sex*:
+
+# ipsatized transfers
+
+ips_summary <- summarySEwithin(Data_subset, 
+                               measurevar="response_i", 
+                               withinvars=c("expression", "reputation", "sex"),
+                               betweenvars=c("Culture", "Gender"),
+                               idvar="pID", 
+                               na.rm=T)
+
+ips_summary %>% pander
+
+ggplot(subset(ips_summary, !is.na(Gender)), aes(x=reputation, y=response_i, fill=expression)) +
+  facet_grid(Culture ~ Gender + sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=response_i-se, ymax=response_i+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
+  xlab("Target Reputation") +
+  ylab("Ipsatized Transfer") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14))  
+
+# raw transfers
+
+raw_summary <- summarySEwithin(Data_subset, 
+                               measurevar="responseConvert", 
+                               withinvars=c("expression", "reputation", "sex"),
+                               betweenvars=c("Culture", "Gender"),
+                               idvar="pID", 
+                               na.rm=T)
+
+raw_summary %>% pander
+
+ggplot(subset(raw_summary, !is.na(Gender)), aes(x=reputation, y=responseConvert, fill=expression)) +
+  facet_grid(Culture ~ Gender + sex) +
+  geom_bar(position=position_dodge(.55), stat="identity", width=.5) +
+  geom_errorbar(position=position_dodge(.55), width=.25, aes(ymin=responseConvert-se, ymax=responseConvert+se)) +
+  scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
+  scale_x_discrete(labels=c("low" = "Low", "mod" = "Mod", "high" = "High")) +
+  xlab("Target Reputation") +
+  ylab("Raw Transfer ($)") +
+  theme(axis.title.x = element_text(face = "bold", size = 16),
+        axis.text.x = element_text(size = 14),
+        strip.text.x = element_text(size = 14),
+        axis.title.y = element_text(face = "bold", size = 16),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 14)) 
 ```
 
 # Confirmatory analysis
