@@ -31,7 +31,8 @@ library(mediation)
 library(sjstats) # To output eta squared
 library(qualtRics)
 library(tidyverse)
-library(Rmisc)
+library(Rmisc) # for summarySEwithin
+source("../../../../R\ functions/summarySEwithin2.R") # updated summarySEwithin function for unnormed means
 ```
 
 ```{r include = FALSE}
@@ -1273,6 +1274,8 @@ Based on [this](https://www.niklasjohannes.com/post/calculating-and-visualizing-
 
 This method is based on [Morey, 2008](http://pcl.missouri.edu/sites/default/files/morey.2008.pdf). 
 
+However, ended up using the further edited function, [summarySEwithin2](https://gist.github.com/hauselin/a83b6d2f05b0c90c0428017455f73744) because otherwise the "normed" means reported using the summarySEwithin funciton are confusing. 
+
 ## Transfers by Culture
 
 ```{r, echo=FALSE, message=FALSE}
@@ -1353,7 +1356,7 @@ ggplot(Data_pID, aes(x = give_PPP)) +
 ```{r}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i_norep", 
                                withinvars=c("expression_norep"),
                                idvar="pID", 
@@ -1374,12 +1377,12 @@ ggplot(ips_summary, aes(x=expression_norep, y=response_i_norep, fill=expression_
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5),
-        legend.position = "none") +
+        legend.position = "none") + 
   coord_cartesian(y=c(-0.35,0.3))
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert_norep", 
                                withinvars=c("expression_norep"), 
                                idvar="pID", 
@@ -1408,7 +1411,7 @@ ggplot(raw_summary, aes(x=expression_norep, y=responseConvert_norep, fill=expres
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i_norep", 
                                withinvars=c("expression_norep"), 
                                betweenvars=c("Culture"), 
@@ -1423,6 +1426,7 @@ ggplot(ips_summary, aes(x=Culture, y=response_i_norep, fill=expression_norep)) +
   scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) + # update legend title, labels, and color at once
   xlab("Culture") +
   ylab("Ipsatized Transfer") +
+  coord_cartesian(y=c(-0.5,0.5)) +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1434,7 +1438,7 @@ ggplot(ips_summary, aes(x=Culture, y=response_i_norep, fill=expression_norep)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert_norep", 
                                withinvars=c("expression_norep"), 
                                betweenvars=c("Culture"), 
@@ -1464,6 +1468,8 @@ ggplot(raw_summary, aes(x=Culture, y=responseConvert_norep, fill=expression_nore
 Based on [this](https://www.niklasjohannes.com/post/calculating-and-visualizing-error-bars-for-within-subjects-designs/) post, decided to use summarySEwithin function (in Rmisc package) to compute SE's for reporting and plotting.
 
 This method is based on [Morey, 2008](http://pcl.missouri.edu/sites/default/files/morey.2008.pdf). 
+
+However, ended up using the further edited function, [summarySEwithin2](https://gist.github.com/hauselin/a83b6d2f05b0c90c0428017455f73744) because otherwise the "normed" means reported using the summarySEwithin funciton are confusing. 
 
 ## Transfers by Culture
 
@@ -1545,7 +1551,7 @@ ggplot(Data_pID, aes(x = give_PPP)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("reputation"),
                                idvar="pID", 
@@ -1564,11 +1570,11 @@ ggplot(ips_summary, aes(x=reputation, y=response_i)) +
         strip.text.x = element_text(size = 14),
         axis.title.y = element_text(face = "bold", size = 16),
         axis.text.y = element_text(size = 14),
-        plot.title = element_text(hjust = 0.5)) 
+        plot.title = element_text(hjust = 0.5))
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("reputation"), 
                                idvar="pID", 
@@ -1595,7 +1601,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression"),
                                idvar="pID", 
@@ -1617,11 +1623,11 @@ ggplot(ips_summary, aes(x=expression, y=response_i, fill=expression)) +
         axis.text.y = element_text(size = 14),
         plot.title = element_text(hjust = 0.5),
         legend.position = "none") +
-  coord_cartesian(y=c(-0.35,0.3))
+  coord_cartesian(y=c(-0.1,0.1))
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression"), 
                                idvar="pID", 
@@ -1650,7 +1656,7 @@ ggplot(raw_summary, aes(x=expression, y=responseConvert, fill=expression)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("reputation"), 
                                betweenvars=c("Culture"), 
@@ -1678,7 +1684,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=Culture)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("reputation"), 
                                betweenvars=c("Culture"), 
@@ -1709,7 +1715,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=Culture)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression"),
                                betweenvars=c("Culture"),
@@ -1724,6 +1730,7 @@ ggplot(ips_summary, aes(x=Culture, y=response_i, fill=expression)) +
   scale_fill_manual(name = "Target Expression", labels = c("Neutral", "Calm", "Excited"), values=c("#bdbdbd","#94b3d7", "#d99594")) +
   xlab("Culture") +
   ylab("Ipsatized Transfer") +
+  coord_cartesian(y=c(-0.15,0.15)) +
   theme(axis.title.x = element_text(face = "bold", size = 16),
         axis.text.x = element_text(size = 14),
         strip.text.x = element_text(size = 14),
@@ -1735,7 +1742,7 @@ ggplot(ips_summary, aes(x=Culture, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression"),
                                betweenvars=c("Culture"),
@@ -1765,7 +1772,7 @@ ggplot(raw_summary, aes(x=Culture, y=responseConvert, fill=expression)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("reputation", "expression"), 
                                idvar="pID", 
@@ -1792,7 +1799,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("reputation", "expression"), 
                                idvar="pID", 
@@ -1822,7 +1829,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation"),
                                betweenvars=c("Culture"),
@@ -1850,7 +1857,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation"),
                                betweenvars=c("Culture"),
@@ -1882,7 +1889,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation", "target_race"),
                                betweenvars=c("Culture"),
@@ -1910,7 +1917,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation", "target_race"),
                                betweenvars=c("Culture"),
@@ -1942,7 +1949,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation", "sex"),
                                betweenvars=c("Culture"),
@@ -1970,7 +1977,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation", "sex"),
                                betweenvars=c("Culture"),
@@ -2003,7 +2010,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
 ```{r, echo=FALSE}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation", "target_race", "sex"),
                                betweenvars=c("Culture"),
@@ -2031,7 +2038,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation", "target_race", "sex"),
                                betweenvars=c("Culture"),
@@ -2063,7 +2070,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
 ```{r}
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation", "target_race", "sex"),
                                idvar="pID", 
@@ -2090,7 +2097,7 @@ ggplot(ips_summary, aes(x=reputation, y=response_i, fill=expression)) +
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation", "target_race", "sex"),
                                idvar="pID", 
@@ -2123,7 +2130,7 @@ ggplot(raw_summary, aes(x=reputation, y=responseConvert, fill=expression)) +
 
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation"),
                                betweenvars=c("Culture", "Gender"),
@@ -2151,7 +2158,7 @@ ggplot(subset(ips_summary, !is.na(Gender)), aes(x=reputation, y=response_i, fill
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation"),
                                betweenvars=c("Culture", "Gender"),
@@ -2181,7 +2188,7 @@ ggplot(subset(raw_summary, !is.na(Gender)), aes(x=reputation, y=responseConvert,
 
 # ipsatized transfers
 
-ips_summary <- summarySEwithin(Data_subset, 
+ips_summary <- summarySEwithin2(Data_subset, 
                                measurevar="response_i", 
                                withinvars=c("expression", "reputation", "sex"),
                                betweenvars=c("Culture", "Gender"),
@@ -2209,7 +2216,7 @@ ggplot(subset(ips_summary, !is.na(Gender)), aes(x=reputation, y=response_i, fill
 
 # raw transfers
 
-raw_summary <- summarySEwithin(Data_subset, 
+raw_summary <- summarySEwithin2(Data_subset, 
                                measurevar="responseConvert", 
                                withinvars=c("expression", "reputation", "sex"),
                                betweenvars=c("Culture", "Gender"),
@@ -2269,18 +2276,18 @@ contrasts(Data_norep$expression_norep)
 
 ## Orthogonal contrasts:
 
-# Data_norep 
+### Data_norep 
 ```{r}
 # EXPRESSION 
 # expression: calm vs. excited
-contrasts(Data_norep$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
-                                            orthogonal = c(2, -1, -1))
+contrasts(Data_norep$expression_norep)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                                  orthogonal = c(2, -1, -1))
 # expression: neutral vs. calm
-contrasts(Data_norep$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-                                            orthogonal = c(-1, -1, 2))
+contrasts(Data_norep$expression_norep)   <- cbind(NeutVsCalm = c(1, -1, 0),
+                                                  orthogonal = c(-1, -1, 2))
 # expression: excited vs. neutral
-contrasts(Data_norep$expression)   <- cbind(ExciVsNeut = c(-1, 0, 1),
-                                            orthogonal = c(-1, 2, -1))
+contrasts(Data_norep$expression_norep)   <- cbind(ExciVsNeut = c(-1, 0, 1),
+                                                  orthogonal = c(-1, 2, -1))
 
 contrasts(Data_norep$Culture) <- cbind(AsiVsEur = c(-1,1))
 
@@ -2300,15 +2307,11 @@ summary(model_simpleConv)
 # summary(model_ipsatized)
 ```
 
+### probe Culture x Expression (calm/excited) interaction
 ```{r}
-# probe Culture x Expression interaction by dummy coding
-
 # expression: calm vs. excited
-contrasts(Data_norep$expression)   <- cbind(CalmVsExci = c(0, 1, -1),
-                                            orthogonal = c(2, -1, -1))
-# # expression: neutral vs. calm
-# contrasts(Data_norep$expression)   <- cbind(NeutVsCalm = c(1, -1, 0),
-#                                       orthogonal = c(-1, -1, 2))
+contrasts(Data_norep$expression_norep)   <- cbind(CalmVsExci = c(0, 1, -1),
+                                                  orthogonal = c(2, -1, -1))
 
 # probe expression for Eur American (Eur American == 0, reference)
 contrasts(Data_norep$Culture) <- cbind(EurAmerRef = c(0,1))
@@ -2321,6 +2324,79 @@ summary(model_simpleConv)
 
 # probe expression for East Asian (Asian == 0, reference)
 contrasts(Data_norep$Culture) <- cbind(AsianRef = c(1,0))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+
+# By expression:
+# only excited expressions (excited == 0, reference)
+contrasts(Data_norep$expression_norep)   <- cbind(exciRef1 = c(1, 0, 0),
+                                                  exciRef2 = c(0, 1, 0))
+contrasts(Data_norep$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+# only calm expressions (calm == 0, reference)
+contrasts(Data_norep$expression_norep)   <- cbind(calmRef1 = c(1, 0, 0),
+                                                  calmRef2 = c(0, 0, 1))
+contrasts(Data_norep$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+```
+
+### probe Culture x Expression (excited/neutral) interaction
+```{r}
+# expression: excited vs. neutral
+contrasts(Data_norep$expression_norep)   <- cbind(ExciVsNeut = c(-1, 0, 1),
+                                                  orthogonal = c(-1, 2, -1))
+
+# probe expression for Eur American (Eur American == 0, reference)
+contrasts(Data_norep$Culture) <- cbind(EurAmerRef = c(0,1))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+# probe expression for East Asian (Asian == 0, reference)
+contrasts(Data_norep$Culture) <- cbind(AsianRef = c(1,0))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+
+# By expression:
+# only excited expressions (excited == 0, reference)
+contrasts(Data_norep$expression_norep)   <- cbind(exciRef1 = c(1, 0, 0),
+                                                  exciRef2 = c(0, 1, 0))
+contrasts(Data_norep$Culture) <- cbind(AsianVsEur = c(-1, 1))
+
+model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_ipsatized)
+
+model_simpleConv <- lmer(data = Data_norep, responseConvert_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
+summary(model_simpleConv)
+
+# only neutral expressions (neutral == 0, reference)
+contrasts(Data_norep$expression_norep)   <- cbind(neutRef1 = c(0, 1, 0),
+                                                  neutRef2 = c(0, 0, 1))
+contrasts(Data_norep$Culture) <- cbind(AsianVsEur = c(-1, 1))
 
 model_ipsatized <- lmer(data = Data_norep, response_i_norep ~ 1 + Culture * expression_norep + Gender + Age + FamSES2num + (1|pID), REML=FALSE) 
 summary(model_ipsatized)
